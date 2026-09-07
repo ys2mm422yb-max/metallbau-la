@@ -31,19 +31,15 @@ async function capturePage(page, filename) {
     innerHeight: window.innerHeight,
   }));
 
-  // Chromium cannot render a screenshot with a dimension above 32767 px.
-  // Keep full-page captures for normal pages; for very long pages capture
-  // representative top/middle/bottom viewports without weakening any QA checks.
-  if (scrollHeight <= 30000) {
-    await page.screenshot({ path: `${out}/${filename}.png`, fullPage: true });
-    return;
-  }
-
-  const positions = [
-    { suffix: 'top', y: 0 },
-    { suffix: 'middle', y: Math.max(0, Math.floor((scrollHeight - innerHeight) / 2)) },
-    { suffix: 'bottom', y: Math.max(0, scrollHeight - innerHeight) },
-  ];
+  // Viewport chunks avoid Chromium's 32767-pixel screenshot limit, including
+  // high-device-scale mobile contexts, while retaining visual QA artifacts.
+  const positions = scrollHeight <= innerHeight + 1
+    ? [{ suffix: 'view', y: 0 }]
+    : [
+        { suffix: 'top', y: 0 },
+        { suffix: 'middle', y: Math.max(0, Math.floor((scrollHeight - innerHeight) / 2)) },
+        { suffix: 'bottom', y: Math.max(0, scrollHeight - innerHeight) },
+      ];
 
   for (const { suffix, y } of positions) {
     await page.evaluate((scrollY) => window.scrollTo(0, scrollY), y);
