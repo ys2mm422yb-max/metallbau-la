@@ -1,0 +1,32 @@
+name: Source Crawl Audit
+
+on:
+  push:
+    branches:
+      - fix/visual-ios-qa-v3
+    paths:
+      - scripts/source-crawl.mjs
+      - .github/workflows/source-crawl.yml
+
+permissions:
+  contents: read
+
+jobs:
+  crawl-public-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Crawl current public Larasser pages
+        run: node scripts/source-crawl.mjs
+      - name: Upload source audit artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: larasser-public-source-crawl
+          path: |
+            source-crawl.json
+            source-pages
+          retention-days: 7
