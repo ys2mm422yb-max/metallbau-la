@@ -24,6 +24,7 @@ jobs:
           test -f index.html
           test -f styles.css
           test -f script.js
+          test -f .github/browser-qa.mjs
           grep -q 'noindex,nofollow' index.html
           grep -q 'Unverbindliche Design-Demo' index.html
           grep -q 'EN 1090-2 EXC2' index.html
@@ -58,3 +59,44 @@ jobs:
           assert 'mailto:info@larasser-metallbau.de' in html, 'Missing central mail contact'
           print('Basic markup checks passed')
           PY
+
+  responsive-browser-qa:
+    runs-on: ubuntu-latest
+    needs: qa
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+
+      - name: Start preview server
+        run: |
+          nohup python3 -m http.server 8080 >/tmp/metallbau-la-browser-qa-http.log 2>&1 &
+          for i in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:8080/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/metallbau-la-browser-qa-http.log
+          exit 1
+
+      - name: Desktop Android and iPhone browser QA
+        run: node .github/browser-qa.mjs
+
+      - name: Upload responsive screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: responsive-browser-screenshots
+          path: artifacts/browser-qa
+          if-no-files-found: warn
+          retention-days: 14
