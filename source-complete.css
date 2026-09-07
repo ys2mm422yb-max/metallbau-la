@@ -6,6 +6,12 @@
   display: none !important;
 }
 
+/* The filter badges already communicate coverage; avoid a competing 36-project
+   counter when Medallions is represented as the 37th reference group. */
+.reference-count {
+  display: none !important;
+}
+
 .source-reference-card {
   content-visibility: auto;
   contain-intrinsic-size: 520px;
@@ -132,21 +138,69 @@
 }
 
 @media (max-width: 680px) {
-  .source-reference-card .reference-image {
-    height: 270px;
+  /* On phones the complete catalog remains accessible, but it no longer makes
+     the page tens of thousands of pixels tall. Categories can be swiped and
+     filters/search still expose every matching project. */
+  #reference-grid.reference-grid {
+    display: flex !important;
+    gap: 12px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #reference-grid.reference-grid::-webkit-scrollbar,
+  #specialarbeiten .special-project-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  #reference-grid .source-project-card {
+    flex: 0 0 min(82vw, 330px);
+    scroll-snap-align: start;
+    content-visibility: visible;
+    contain-intrinsic-size: auto;
+  }
+
+  #reference-grid .source-project-card .reference-image {
+    height: 220px !important;
   }
 
   .source-reference-card .reference-copy {
-    padding: 17px 17px 20px;
+    padding: 15px 15px 18px;
   }
 
   .source-reference-card .reference-copy h3 {
-    font-size: 21px;
+    font-size: 20px;
   }
 
   .source-reference-card .reference-copy p {
-    font-size: 14px;
-    line-height: 1.5;
+    font-size: 13px;
+    line-height: 1.48;
+  }
+
+  /* Interior is already represented in the main reference catalog. Keep the
+     dedicated visual section useful without duplicating nine tall phone cards. */
+  #specialarbeiten .special-project-grid {
+    display: flex !important;
+    gap: 12px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #specialarbeiten .special-project {
+    flex: 0 0 min(82vw, 330px);
+    scroll-snap-align: start;
+  }
+
+  #specialarbeiten .special-project-image {
+    height: 220px !important;
   }
 
   .source-medallion-card > .reference-image {
