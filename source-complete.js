@@ -16,6 +16,15 @@
   const nav = document.querySelector('.site-nav');
   const navToggle = document.querySelector('.nav-toggle');
 
+  function unlockMenuAt(restoreY) {
+    const body = document.body;
+    body.classList.remove('nav-open');
+    Object.assign(body.style, { position: '', top: '', left: '', right: '', width: '' });
+    navToggle?.setAttribute('aria-expanded', 'false');
+    navToggle?.setAttribute('aria-label', 'Navigation öffnen');
+    if (Number.isFinite(restoreY)) window.scrollTo(0, Math.max(0, restoreY));
+  }
+
   function closeMenuAndNavigate(anchor, target) {
     const body = document.body;
     const menuOpen = body.classList.contains('nav-open');
@@ -24,10 +33,7 @@
       : window.scrollY;
     const absoluteTargetTop = lockedY + target.getBoundingClientRect().top;
 
-    body.classList.remove('nav-open');
-    Object.assign(body.style, { position: '', top: '', left: '', right: '', width: '' });
-    navToggle?.setAttribute('aria-expanded', 'false');
-    navToggle?.setAttribute('aria-label', 'Navigation öffnen');
+    unlockMenuAt(lockedY);
 
     requestAnimationFrame(() => {
       const headerHeight = document.querySelector('.site-header')?.getBoundingClientRect().height || 0;
@@ -49,6 +55,17 @@
     event.stopPropagation();
     closeMenuAndNavigate(anchor, target);
   });
+
+  // On mobile, Escape must restore the exact scroll position encoded by the fixed
+  // body lock. Using the inline top value avoids stale scroll state after viewport
+  // changes in Chromium/WebKit while the full-screen menu is open.
+  window.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || !document.body.classList.contains('nav-open')) return;
+    const lockedY = Math.max(0, -(Number.parseFloat(document.body.style.top || '0') || 0));
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    unlockMenuAt(lockedY);
+  }, true);
 
   let initialized = false;
   let selectedCategory = null;
