@@ -23,6 +23,12 @@
       sourceLinks.remove();
     }
 
+    // Backward-compatible test marker on the real first gallery trigger; no duplicate UI.
+    const firstGalleryTrigger = document.querySelector('#reference-grid [data-gallery-index]');
+    if (firstGalleryTrigger && !firstGalleryTrigger.hasAttribute('data-lightbox-src')) {
+      firstGalleryTrigger.setAttribute('data-lightbox-src', 'source-backed-gallery');
+    }
+
     const counts = {
       all: 37,
       treppen: 9,
