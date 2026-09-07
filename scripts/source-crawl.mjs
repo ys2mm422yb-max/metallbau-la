@@ -68,16 +68,18 @@ function textSnapshot(html) {
   );
 }
 
+await fs.mkdir('source-pages', { recursive: true });
 const result = {};
 for (const [key, url] of Object.entries(pages)) {
   const response = await fetch(url, {
     headers: {
-      'user-agent': 'Mozilla/5.0 (compatible; LarasserDemoSourceAudit/1.0; +https://github.com/ys2mm422yb-max/metallbau-la)',
+      'user-agent': 'Mozilla/5.0 (compatible; LarasserDemoSourceAudit/1.1; +https://github.com/ys2mm422yb-max/metallbau-la)',
       accept: 'text/html,application/xhtml+xml',
     },
     redirect: 'follow',
   });
   const html = await response.text();
+  await fs.writeFile(`source-pages/${key}.html`, html);
   result[key] = {
     url,
     status: response.status,
@@ -86,8 +88,7 @@ for (const [key, url] of Object.entries(pages)) {
     text: textSnapshot(html),
   };
   console.log(`SOURCE ${key}: status=${response.status} images=${result[key].imageUrls.length}`);
-  for (const image of result[key].imageUrls) console.log(`IMAGE ${key} ${image}`);
 }
 
 await fs.writeFile('source-crawl.json', JSON.stringify(result, null, 2));
-console.log('WROTE source-crawl.json');
+console.log('WROTE source-crawl.json and source-pages/*.html');
