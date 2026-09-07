@@ -22,6 +22,7 @@ jobs:
           node --check source-complete.js
           node --check .github/browser-qa.mjs
           node --check .github/source-complete-qa.mjs
+          node --check .github/visual-extra-qa.mjs
 
       - name: Required files and demo safeguards
         run: |
@@ -34,6 +35,7 @@ jobs:
           test -f SOURCE_AUDIT.md
           test -f .github/browser-qa.mjs
           test -f .github/source-complete-qa.mjs
+          test -f .github/visual-extra-qa.mjs
           grep -q 'noindex,nofollow' index.html
           grep -q 'Unverbindliche Design-Demo' index.html
           grep -q 'EN 1090-2 EXC2' index.html
@@ -46,6 +48,8 @@ jobs:
           grep -q "specialarbeiten" script.js
           grep -q "Interior project coverage incomplete" .github/browser-qa.mjs
           grep -q "Medallions filter" .github/browser-qa.mjs
+          grep -q "betrieb" .github/visual-extra-qa.mjs
+          grep -q "footer" .github/visual-extra-qa.mjs
           grep -q "balkone: 7" .github/source-complete-qa.mjs
           grep -q "stahlbau: 5" .github/source-complete-qa.mjs
           grep -q "expected 37 source-complete reference cards" .github/source-complete-qa.mjs
@@ -119,6 +123,9 @@ jobs:
 
       - name: Desktop Android and iPhone browser QA
         run: node .github/browser-qa.mjs
+
+      - name: Betrieb and footer visual QA
+        run: node .github/visual-extra-qa.mjs
 
       - name: Source-complete category QA
         run: node .github/source-complete-qa.mjs
