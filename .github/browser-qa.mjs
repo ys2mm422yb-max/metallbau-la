@@ -42,12 +42,23 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+async function waitForVisibleImages(page) {
+  await page.waitForFunction(() => {
+    const visible = [...document.images].filter((img) => {
+      const r = img.getBoundingClientRect();
+      return r.bottom > 0 && r.top < window.innerHeight && r.right > 0 && r.left < window.innerWidth;
+    });
+    return visible.every((img) => img.complete && img.naturalWidth > 0);
+  }, null, { timeout: 8000 });
+}
+
 async function viewportShot(page, profileName, label, selector) {
   if (selector) {
     const target = page.locator(selector).first();
     await target.scrollIntoViewIfNeeded();
-    await page.waitForTimeout(120);
+    await page.waitForTimeout(180);
   }
+  await waitForVisibleImages(page);
   await page.screenshot({ path: `${outDir}/${profileName}-${label}.png`, fullPage: false });
 }
 
@@ -138,6 +149,7 @@ for (const profile of profiles) {
 
   const firstLightboxButton = page.locator('[data-lightbox-src]').first();
   await firstLightboxButton.scrollIntoViewIfNeeded();
+  await waitForVisibleImages(page);
   await firstLightboxButton.click();
   await page.waitForTimeout(120);
   assert(await page.locator('#lightbox').evaluate((el) => el.open), `${profile.name}: lightbox did not open`);
@@ -148,14 +160,23 @@ for (const profile of profiles) {
   const fabricationLink = page.locator('[data-prefill="Lohnbiegen & Lohnschneiden"]').first();
   await fabricationLink.scrollIntoViewIfNeeded();
   await fabricationLink.click();
-  await page.waitForTimeout(120);
+  await page.waitForTimeout(700);
   const selectedProjectType = await page.locator('#project-type').inputValue();
   assert(selectedProjectType === 'Lohnbiegen & Lohnschneiden', `${profile.name}: fabrication prefill failed`);
 
+  const anchorMetrics = await page.evaluate(() => {
+    const header = document.querySelector('.site-header');
+    const section = document.querySelector('#anfrage');
+    return {
+      headerBottom: header?.getBoundingClientRect().bottom ?? 0,
+      sectionTop: section?.getBoundingClientRect().top ?? -1,
+    };
+  });
+  assert(anchorMetrics.sectionTop >= anchorMetrics.headerBottom + 6, `${profile.name}: #anfrage is hidden behind fixed header (${anchorMetrics.sectionTop}px vs ${anchorMetrics.headerBottom}px)`);
+
   const form = page.locator('#project-form');
-  await form.scrollIntoViewIfNeeded();
   assert(await form.isVisible(), `${profile.name}: inquiry form is not visible`);
-  await viewportShot(page, profile.name, 'form', '#project-form');
+  await viewportShot(page, profile.name, 'form', '#anfrage .inquiry-copy');
 
   const bottomMetrics = await page.evaluate(() => ({ innerWidth: window.innerWidth, scrollWidth: document.documentElement.scrollWidth }));
   assert(bottomMetrics.scrollWidth <= bottomMetrics.innerWidth + 1, `${profile.name}: horizontal overflow after interactions`);
