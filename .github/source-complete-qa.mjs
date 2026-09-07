@@ -24,9 +24,9 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-async function ensureImageLoaded(locator, profile, category) {
+async function ensureImageLoaded(locator, profile, label, imageSelector = '.reference-image img') {
   await locator.scrollIntoViewIfNeeded();
-  const image = locator.locator('.reference-image img').first();
+  const image = locator.locator(imageSelector).first();
   await image.waitFor({ state: 'visible' });
   await image.evaluate(async (img) => {
     if (!img.complete) {
@@ -38,8 +38,25 @@ async function ensureImageLoaded(locator, profile, category) {
     }
     try { await img.decode(); } catch {}
   });
-  const health = await image.evaluate((img) => ({ complete: img.complete, width: img.naturalWidth, src: img.currentSrc || img.src }));
-  assert(health.complete && health.width > 0, `${profile}: ${category} has a broken lead image: ${health.src}`);
+  const health = await image.evaluate((img) => ({ complete: img.complete, width: img.naturalWidth, height: img.naturalHeight, src: img.currentSrc || img.src }));
+  assert(health.complete && health.width > 0 && health.height > 0, `${profile}: ${label} has a broken image: ${health.src}`);
+  return health;
+}
+
+async function assertCardImageContained(card, profile, label) {
+  const state = await card.evaluate((element) => {
+    const frame = element.querySelector('.reference-image');
+    const image = frame?.querySelector('img');
+    if (!frame || !image) return null;
+    const f = frame.getBoundingClientRect();
+    const i = image.getBoundingClientRect();
+    return { frame: [f.left, f.top, f.right, f.bottom], image: [i.left, i.top, i.right, i.bottom] };
+  });
+  assert(state, `${profile}: ${label} is missing its image frame`);
+  const [fl, ft, fr, fb] = state.frame;
+  const [il, it, ir, ib] = state.image;
+  const tolerance = 1.5;
+  assert(il >= fl - tolerance && ir <= fr + tolerance && it >= ft - tolerance && ib <= fb + tolerance, `${profile}: ${label} image escapes its frame`);
 }
 
 for (const profile of profiles) {
@@ -65,7 +82,21 @@ for (const profile of profiles) {
     const visibleCount = await visible.count();
     assert(visibleCount === count, `${profile.name}: ${category} filter expected ${count} photo projects, got ${visibleCount}`);
 
-    await ensureImageLoaded(visible.first(), profile.name, category);
+    for (let index = 0; index < visibleCount; index += 1) {
+      const card = visible.nth(index);
+      const title = (await card.locator('h3').textContent())?.trim() || `${category} ${index + 1}`;
+      await ensureImageLoaded(card, profile.name, title);
+      await assertCardImageContained(card, profile.name, title);
+    }
+
+    if (category === 'medallions') {
+      const thumbs = page.locator('.source-medallion-card .medallion-thumb');
+      const thumbCount = await thumbs.count();
+      assert(thumbCount === 12, `${profile.name}: expected 12 medallion thumbnails, got ${thumbCount}`);
+      for (let index = 0; index < thumbCount; index += 1) {
+        await ensureImageLoaded(thumbs.nth(index), profile.name, `medallion thumbnail ${index + 1}`, 'img');
+      }
+    }
 
     if (category === 'balkone' || category === 'stahlbau' || category === 'medallions') {
       await visible.first().scrollIntoViewIfNeeded();
@@ -96,4 +127,4 @@ for (const profile of profiles) {
   await browser.close();
 }
 
-console.log('Source-complete QA passed on desktop, Android and iPhone/WebKit.');
+console.log('Source-complete QA passed on desktop, Android and iPhone/WebKit: all 37 lead images and all 12 medallion thumbnails loaded and stayed in-frame.');
