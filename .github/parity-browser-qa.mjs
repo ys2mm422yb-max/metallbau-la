@@ -40,7 +40,8 @@ for (const scenario of scenarios) {
 
   await checkStatus(page, '/');
   await page.locator('h1').waitFor({ state: 'visible' });
-  assert((await page.locator('h1').innerText()).includes('METALLBAU'), `${scenario.name}: homepage H1 missing`);
+  const homeHeading = (await page.locator('h1').innerText()).toLowerCase();
+  assert(homeHeading.includes('metallbau') && homeHeading.includes('larasser'), `${scenario.name}: homepage H1 missing`);
   assert(await page.locator('.brand-mark').first().isVisible(), `${scenario.name}: official mark not visible`);
   assert(await page.locator('a[href="referenzen/treppen-and-gelander/"]').count() > 0, `${scenario.name}: Treppen route missing`);
   await checkNoHorizontalOverflow(page, `${scenario.name} homepage`);
