@@ -225,6 +225,11 @@ body {
 .lightbox-nav[hidden] { display: none; }
 
 @media (max-width: 1040px) {
+  /* Keep body restoration immediate. Anchor navigation still requests smooth
+     behavior explicitly in JavaScript, so this only removes the unintended
+     animation after closing the fixed-body mobile menu. */
+  html { scroll-behavior: auto; }
+
   /*
    * Real iOS Safari is stricter than desktop WebKit when a fixed child sits
    * inside another fixed element. Turn the header itself into the full-screen
