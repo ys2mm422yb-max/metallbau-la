@@ -1,9 +1,9 @@
 .reference-context {
-  margin: 20px 0 0;
-  max-width: 850px;
-  color: rgba(255,255,255,.68);
-  font-size: 15px;
-  line-height: 1.65;
+  display: none !important;
+}
+
+#referenzen .section-intro {
+  display: none !important;
 }
 
 .source-reference-card {
@@ -68,9 +68,8 @@
   margin-bottom: 16px;
 }
 
-/* The detailed, source-verified texts are already shown in the main reference cards.
-   The older dynamically generated Interior snippets contained internal migration wording,
-   so this secondary visual gallery intentionally stays image/title-led. */
+/* The source-verified descriptions are already present in the main reference cards.
+   This secondary Interior gallery stays deliberately image/title-led. */
 #specialarbeiten .special-project p,
 .source-category-links {
   display: none !important;
@@ -119,12 +118,6 @@
 }
 
 @media (max-width: 680px) {
-  .reference-context {
-    margin-top: 14px;
-    font-size: 14px;
-    line-height: 1.55;
-  }
-
   .source-reference-card .reference-image {
     height: 270px;
   }
