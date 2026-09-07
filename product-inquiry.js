@@ -19,6 +19,8 @@
       `Stärke: ${val('thickness') ? `${val('thickness')} mm` : '—'}`,
       `Länge: ${val('length') ? `${val('length')} mm` : '—'}`,
       `Breite: ${val('width') ? `${val('width')} mm` : '—'}`,
+      `Bohrungen: ${val('holes') || '—'}`,
+      `Bohrungsdurchmesser: ${val('hole-diameter') ? `${val('hole-diameter')} mm` : '—'}`,
       `Bearbeitung: ${val('process') || '—'}`,
       `Hinweise: ${val('notes') || '—'}`,
     ];
