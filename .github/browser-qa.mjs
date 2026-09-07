@@ -107,7 +107,7 @@ for (const profile of profiles) {
   await page.goto(baseURL, { waitUntil: 'networkidle' });
   await waitForUX(page);
 
-  assert(await page.title() === 'Metallbau Larasser – Demo', `${profile.name}: unexpected title`);
+  assert(await page.title() === 'Metallbau Larasser | Metallbau & Metallgestaltung in Grafing', `${profile.name}: unexpected title`);
   assert((await page.locator('h1').innerText()).includes('Metall. Präzise.'), `${profile.name}: hero missing`);
   await assertNoOverflow(page, profile.name, 'at top');
   await shot(page, profile.name, 'top');
