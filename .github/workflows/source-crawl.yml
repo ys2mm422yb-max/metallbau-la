@@ -26,5 +26,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: larasser-public-source-crawl
-          path: source-crawl.json
+          path: |
+            source-crawl.json
+            source-pages
           retention-days: 7
