@@ -228,7 +228,8 @@ for (const profile of profiles) {
   });
   assert(specialOverflow && specialOverflow.left >= -1 && specialOverflow.right <= specialOverflow.viewport + 1, `${profile.name}: special work section overflows viewport`);
 
-  const firstLightboxButton = page.locator('[data-lightbox-src]').first();
+  const firstLightboxButton = page.locator('.reference-image[data-gallery-index]').first();
+  assert(await firstLightboxButton.count() === 1, `${profile.name}: source-backed gallery control missing`);
   await firstLightboxButton.scrollIntoViewIfNeeded();
   await settleImages(page);
   await firstLightboxButton.click();
