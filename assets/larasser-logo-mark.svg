@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 906" role="img" aria-labelledby="title desc">
+  <title id="title">Larasser Firmenzeichen</title>
+  <desc id="desc">Geometrisches Firmenzeichen aus grauen Metallbau-Elementen.</desc>
+  <g fill="#808080">
+    <rect x="211" y="22" width="63" height="794" />
+    <rect x="291" y="21" width="64" height="451" />
+    <rect x="129" y="508" width="63" height="308" />
+    <rect x="393" y="508" width="63" height="313" />
+    <polygon points="373,510 292,596 292,689 374,602" />
+    <rect x="4" y="837" width="590" height="69" />
+  </g>
+</svg>
