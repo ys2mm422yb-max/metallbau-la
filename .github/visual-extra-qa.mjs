@@ -36,7 +36,12 @@ async function settle(page) {
 async function shot(page, profile, label, selector) {
   const target = page.locator(selector).first();
   assert(await target.count() === 1, `${profile}: missing ${selector}`);
-  await target.scrollIntoViewIfNeeded();
+  await target.evaluate((element) => {
+    const header = document.querySelector('.site-header');
+    const headerHeight = header?.getBoundingClientRect().height || 0;
+    const top = element.getBoundingClientRect().top + window.scrollY - headerHeight - 12;
+    window.scrollTo({ top: Math.max(0, top), behavior: 'instant' });
+  });
   await page.waitForTimeout(220);
   await settle(page);
   const metrics = await page.evaluate(() => ({ width: innerWidth, scrollWidth: document.documentElement.scrollWidth }));
@@ -51,13 +56,20 @@ for (const profile of profiles) {
   await page.goto(baseURL, { waitUntil: 'networkidle' });
   await page.waitForFunction(() => [...document.styleSheets].some((sheet) => sheet.href?.endsWith('/visual-fixes.css')));
 
-  await shot(page, profile.name, 'betrieb', '#betrieb .about-grid');
+  await shot(page, profile.name, 'betrieb', '#betrieb');
+  await shot(page, profile.name, 'form-fields', '#project-form');
   await shot(page, profile.name, 'footer', '.site-footer');
+
+  const formMetrics = await page.locator('#project-form').evaluate((form) => {
+    const r = form.getBoundingClientRect();
+    return { width: r.width, left: r.left, right: r.right, viewport: window.innerWidth };
+  });
+  assert(formMetrics.width > 0 && formMetrics.left >= -1 && formMetrics.right <= formMetrics.viewport + 1, `${profile.name}: inquiry form escapes viewport`);
 
   const visibleCopy = await page.locator('body').innerText();
   const forbidden = ['öffentlicher Projektbestand', 'diese Demo macht daraus', 'bestehende Website', 'migration'];
   assert(forbidden.every((text) => !visibleCopy.toLowerCase().includes(text.toLowerCase())), `${profile.name}: internal migration wording visible`);
 
   await browser.close();
-  console.log(`${profile.name}: Betrieb/footer visual QA passed`);
+  console.log(`${profile.name}: Betrieb/form/footer visual QA passed`);
 }
