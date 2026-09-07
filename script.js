@@ -56,7 +56,8 @@ filterChips.forEach((chip) => {
 filterLinks.forEach((link) => {
   link.addEventListener('click', () => {
     const filter = link.dataset.filterLink;
-    if (filter) applyFilter(filter);
+    const hasMatches = [...referenceCards, ...archiveItems].some((item) => item.dataset.category === filter);
+    if (filter && hasMatches) applyFilter(filter);
   });
 });
 
