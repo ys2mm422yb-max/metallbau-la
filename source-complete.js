@@ -1,7 +1,7 @@
 /*
   Compatibility/polish layer for the source-backed JSON renderer in script.js.
   It does not render reference cards. It removes audit UI, keeps source URLs available
-  only as hidden QA metadata, and aligns customer-facing filter counts with 37 entries.
+  only as hidden QA metadata, and aligns customer-facing filter counts with 37 reference entries.
 */
 (() => {
   const polish = () => {
