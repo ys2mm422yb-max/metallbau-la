@@ -9,19 +9,18 @@
   const uploadStatus = form.querySelector('[data-upload-status]');
 
   const val = (name) => form.elements.namedItem(name)?.value?.trim?.() || '';
-  const shapeLabel = () => form.querySelector('input[name="part-shape"]:checked')?.value || 'nicht gewählt';
+  const partType = () => form.querySelector('input[name="part-shape"]:checked')?.value || 'nicht gewählt';
 
   const buildSummary = () => {
     const lines = [
-      `Bauteil: ${shapeLabel()}`,
+      `Bauteil / Bearbeitung: ${partType()}`,
       `Stückzahl: ${val('quantity') || '—'}`,
       `Material: ${val('material') || '—'}`,
       `Stärke: ${val('thickness') ? `${val('thickness')} mm` : '—'}`,
       `Länge: ${val('length') ? `${val('length')} mm` : '—'}`,
       `Breite: ${val('width') ? `${val('width')} mm` : '—'}`,
-      `Bohrungen: ${val('holes') || '—'}`,
-      `Bohrungsdurchmesser: ${val('hole-diameter') ? `${val('hole-diameter')} mm` : '—'}`,
-      `Bearbeitung: ${val('process') || '—'}`,
+      `Biegewinkel: ${val('angle') ? `${val('angle')}°` : '—'}`,
+      `Anzahl Biegungen: ${val('bends') || '—'}`,
       `Hinweise: ${val('notes') || '—'}`,
     ];
     const text = lines.join('\n');
