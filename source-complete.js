@@ -107,6 +107,24 @@
     unlockMenuAt(lockedY);
   }, true);
 
+  // script.js originally binds the Medallion toggle while its gallery lives inside
+  // #specialarbeiten. Category-first UX moves that gallery into #reference-grid, so
+  // the old closure would search the now-detached parent. Handle the control in the
+  // capture phase against its new live container and suppress that stale listener.
+  document.addEventListener('click', (event) => {
+    const toggle = event.target.closest('#reference-grid .medallion-toggle');
+    if (!toggle) return;
+    const gallery = toggle.closest('.medallions-inline')?.querySelector('.medallion-gallery');
+    if (!gallery) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const expanded = gallery.dataset.expanded !== 'true';
+    gallery.dataset.expanded = String(expanded);
+    toggle.setAttribute('aria-expanded', String(expanded));
+    const count = gallery.querySelectorAll('.medallion-item').length;
+    toggle.textContent = expanded ? 'Medaillon-Galerie einklappen' : `Alle ${count} Medaillon-Beispiele anzeigen`;
+  }, true);
+
   let initialized = false;
   let selectedCategory = null;
   let medallionSection = null;
