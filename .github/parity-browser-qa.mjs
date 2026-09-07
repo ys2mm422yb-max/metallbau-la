@@ -25,6 +25,34 @@ async function checkStatus(page, path) {
   assert(response?.ok(), `${path}: HTTP ${response?.status()}`);
 }
 
+async function capturePage(page, filename) {
+  const { scrollHeight, innerHeight } = await page.evaluate(() => ({
+    scrollHeight: Math.max(document.documentElement.scrollHeight, document.body.scrollHeight),
+    innerHeight: window.innerHeight,
+  }));
+
+  // Chromium cannot render a screenshot with a dimension above 32767 px.
+  // Keep full-page captures for normal pages; for very long pages capture
+  // representative top/middle/bottom viewports without weakening any QA checks.
+  if (scrollHeight <= 30000) {
+    await page.screenshot({ path: `${out}/${filename}.png`, fullPage: true });
+    return;
+  }
+
+  const positions = [
+    { suffix: 'top', y: 0 },
+    { suffix: 'middle', y: Math.max(0, Math.floor((scrollHeight - innerHeight) / 2)) },
+    { suffix: 'bottom', y: Math.max(0, scrollHeight - innerHeight) },
+  ];
+
+  for (const { suffix, y } of positions) {
+    await page.evaluate((scrollY) => window.scrollTo(0, scrollY), y);
+    await page.waitForTimeout(120);
+    await page.screenshot({ path: `${out}/${filename}-${suffix}.png` });
+  }
+  await page.evaluate(() => window.scrollTo(0, 0));
+}
+
 for (const scenario of scenarios) {
   const browser = await scenario.browserType.launch({ headless: true });
   const context = await browser.newContext(scenario.context);
@@ -40,11 +68,15 @@ for (const scenario of scenarios) {
   assert(await page.locator('.brand-mark').first().isVisible(), `${scenario.name}: official mark not visible`);
   assert(await page.locator('a[href="referenzen/treppen-and-gelander/"]').count() > 0, `${scenario.name}: Treppen route missing`);
   assert(await page.locator('a[href="referenzen/sonderanfertigungen/"]').count() > 0, `${scenario.name}: Sonderanfertigungen route missing`);
+  const homeText = await page.locator('main').innerText();
+  assert(homeText.includes('Metallbau, Gestaltung und Fertigung.'), `${scenario.name}: detailed Leistungen section missing`);
+  assert(homeText.includes('Bauteile direkt anfragen.'), `${scenario.name}: visible Bauteilanfrage entry missing`);
+  assert(homeText.includes('Stephan Larasser') && homeText.includes('Martin Larasser'), `${scenario.name}: company contacts missing on homepage`);
   const facts = await page.locator('.fact-grid').innerText();
   assert(facts.includes('1996') && facts.includes('EXC2'), `${scenario.name}: source-safe homepage facts missing`);
   assert(!facts.includes('29') && !facts.includes('Mitarbeiter'), `${scenario.name}: disputed counters must not be prominent`);
   await checkNoHorizontalOverflow(page, `${scenario.name} homepage`);
-  await page.screenshot({ path: `${out}/${scenario.name}-home.png`, fullPage: true });
+  await capturePage(page, `${scenario.name}-home`);
 
   if (scenario.name !== 'desktop-chromium') {
     await page.evaluate(() => window.scrollTo(0, Math.min(700, document.body.scrollHeight / 3)));
@@ -62,8 +94,9 @@ for (const scenario of scenarios) {
   const hubText = await page.locator('main').innerText();
   assert(hubText.includes('Sonderanfertigungen'), `${scenario.name}: Sonderanfertigungen missing from hub`);
   assert(hubText.includes('Lohnfertigung'), `${scenario.name}: Lohnfertigung missing from hub`);
+  assert(hubText.includes('Bauteil zum Biegen oder Schneiden anfragen?'), `${scenario.name}: Bauteilanfrage CTA missing from hub`);
   await checkNoHorizontalOverflow(page, `${scenario.name} reference hub`);
-  await page.screenshot({ path: `${out}/${scenario.name}-reference-hub.png`, fullPage: true });
+  await capturePage(page, `${scenario.name}-reference-hub`);
 
   await checkStatus(page, '/referenzen/treppen-and-gelander/');
   await page.locator('.project').first().waitFor({ state: 'visible' });
@@ -71,7 +104,7 @@ for (const scenario of scenarios) {
   assert((await page.locator('.project').first().innerText()).includes('Geschmiedete Geländer für den Garten'), `${scenario.name}: first Treppen project mismatch`);
   assert(await page.locator('.gallery img').count() >= 40, `${scenario.name}: Treppen image set incomplete`);
   await checkNoHorizontalOverflow(page, `${scenario.name} Treppen`);
-  await page.screenshot({ path: `${out}/${scenario.name}-treppen.png`, fullPage: true });
+  await capturePage(page, `${scenario.name}-treppen`);
 
   const firstGalleryButton = page.locator('.gallery button').first();
   await firstGalleryButton.click();
@@ -99,7 +132,7 @@ for (const scenario of scenarios) {
   assert((await page.locator('main').innerText()).includes('Stephan Larasser'), `${scenario.name}: Stephan contact missing`);
   assert((await page.locator('main').innerText()).includes('Martin Larasser'), `${scenario.name}: Martin contact missing`);
   await checkNoHorizontalOverflow(page, `${scenario.name} contact`);
-  await page.screenshot({ path: `${out}/${scenario.name}-contact.png`, fullPage: true });
+  await capturePage(page, `${scenario.name}-contact`);
 
   await checkStatus(page, '/referenzen/lohnbiegen-and-lohnschneiden/');
   const machineText = await page.locator('main').innerText();
@@ -122,7 +155,7 @@ for (const scenario of scenarios) {
   assert(configSummary.includes('Biegewinkel: 90°'), `${scenario.name}: angle summary missing`);
   assert(configSummary.includes('Anzahl Biegungen: 2'), `${scenario.name}: bends summary missing`);
   await checkNoHorizontalOverflow(page, `${scenario.name} Bauteilanfrage`);
-  await page.screenshot({ path: `${out}/${scenario.name}-bauteilanfrage.png`, fullPage: true });
+  await capturePage(page, `${scenario.name}-bauteilanfrage`);
 
   for (const legalPath of ['/impressum/', '/datenschutzerklarung/', '/uber-uns/']) {
     await checkStatus(page, legalPath);
