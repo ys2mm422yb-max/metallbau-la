@@ -23,12 +23,15 @@ jobs:
         run: |
           test -f index.html
           test -f styles.css
+          test -f visual-fixes.css
           test -f script.js
+          test -f SOURCE_AUDIT.md
           test -f .github/browser-qa.mjs
           grep -q 'noindex,nofollow' index.html
           grep -q 'Unverbindliche Design-Demo' index.html
           grep -q 'EN 1090-2 EXC2' index.html
           grep -q 'info@larasser-metallbau.de' index.html
+          grep -q "visual-fixes.css" script.js
 
       - name: Serve static site
         run: |
@@ -36,7 +39,9 @@ jobs:
           SERVER_PID=$!
           sleep 2
           curl --fail --silent --show-error http://127.0.0.1:8080/ > /tmp/index-rendered.html
+          curl --fail --silent --show-error http://127.0.0.1:8080/visual-fixes.css > /tmp/visual-fixes.css
           grep -q '<title>Metallbau Larasser – Demo</title>' /tmp/index-rendered.html
+          grep -q 'open-menu header' .github/browser-qa.mjs
           kill $SERVER_PID
 
       - name: Basic markup checks
