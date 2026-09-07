@@ -1,0 +1,261 @@
+/* Visual QA fixes: loaded after styles.css via script.js. */
+
+html,
+body {
+  max-width: 100%;
+}
+
+/* Keep large editorial type readable instead of cramped. */
+.hero h1,
+.section-head h2,
+.fabrication-intro h2,
+.about-title h2,
+.inquiry-copy h2,
+.reference-copy h3,
+.machine-card-copy h3 {
+  text-wrap: balance;
+  overflow-wrap: break-word;
+}
+
+/* Every project/machine image must stay inside its own frame. */
+.reference-card,
+.reference-image,
+.machine-card,
+.machine-card > img {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.reference-card,
+.machine-card {
+  overflow: hidden;
+}
+
+.reference-image {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  height: auto;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.reference-card-wide .reference-image {
+  aspect-ratio: 16 / 9;
+  height: auto;
+}
+
+.reference-image img,
+.machine-card > img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.reference-image img {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+}
+
+.machine-card > img {
+  aspect-ratio: 4 / 3;
+  height: auto;
+}
+
+/* Fixed-header anchor protection. */
+#leistungen,
+#referenzen,
+#lohnfertigung,
+#betrieb,
+#anfrage,
+.machine-grid,
+.reference-grid {
+  scroll-margin-top: calc(var(--header) + 18px);
+}
+
+@media (max-width: 1040px) {
+  /*
+   * iOS Safari can treat a fixed child inside another fixed element oddly.
+   * Make the header itself the full-screen layer while the menu is open,
+   * then position the menu inside it. This prevents the partial overlay seen
+   * on real iPhone Safari.
+   */
+  .site-header {
+    transition: height .22s ease, background .22s ease;
+  }
+
+  .site-nav {
+    position: absolute;
+    inset: var(--header) 0 0;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    padding: 38px 28px calc(42px + env(safe-area-inset-bottom));
+    justify-content: flex-start;
+    background: #0d0f11;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .nav-open .site-header {
+    inset: 0;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 100vh;
+    background: #0d0f11;
+    border-bottom-color: transparent;
+    align-items: flex-start;
+    padding-top: max(0px, env(safe-area-inset-top));
+  }
+
+  .nav-open .site-nav {
+    transform: translateX(0);
+  }
+
+  .nav-open .mobile-actions {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .site-nav a {
+    width: 100%;
+    max-width: 560px;
+  }
+}
+
+@media (max-width: 760px) {
+  .content-width {
+    width: calc(100% - 36px);
+  }
+
+  .hero {
+    min-height: min(760px, 100svh);
+  }
+
+  .hero-content {
+    padding-top: calc(var(--header) + 68px);
+  }
+
+  .hero h1 {
+    font-size: clamp(42px, 12.2vw, 52px);
+    line-height: 1.01;
+    letter-spacing: -.042em;
+  }
+
+  .hero-lead {
+    line-height: 1.62;
+  }
+
+  .section-head h2,
+  .about-title h2,
+  .inquiry-copy h2 {
+    font-size: clamp(34px, 9.7vw, 42px);
+    line-height: 1.04;
+    letter-spacing: -.038em;
+  }
+
+  .fabrication-intro h2 {
+    font-size: clamp(36px, 10.6vw, 46px);
+    line-height: 1.04;
+    letter-spacing: -.04em;
+  }
+
+  .service-card h3,
+  .reference-copy h3,
+  .machine-card-copy h3 {
+    line-height: 1.14;
+    letter-spacing: -.025em;
+  }
+
+  .service-card p,
+  .reference-copy p,
+  .section-intro,
+  .about-copy > p,
+  .fabrication-intro > p:not(.section-label) {
+    line-height: 1.62;
+  }
+
+  .reference-image,
+  .reference-card-wide .reference-image {
+    aspect-ratio: 4 / 3;
+    height: auto;
+  }
+
+  .machine-card > img {
+    aspect-ratio: 16 / 10;
+    height: auto;
+  }
+
+  .reference-copy,
+  .machine-card-copy {
+    overflow: hidden;
+  }
+
+  .reference-copy h3,
+  .machine-card-copy h3,
+  .machine-card-copy strong,
+  .machine-card-copy li {
+    overflow-wrap: anywhere;
+  }
+
+  .filter-bar {
+    scroll-snap-type: x proximity;
+  }
+
+  .filter-chip {
+    scroll-snap-align: start;
+  }
+
+  .project-form {
+    overflow: hidden;
+  }
+
+  .field input:not([type="checkbox"]),
+  .field select,
+  .field textarea,
+  .upload-field input[type="file"] {
+    max-width: 100%;
+    min-width: 0;
+    font-size: 16px;
+  }
+
+  body {
+    padding-bottom: calc(78px + env(safe-area-inset-bottom));
+  }
+
+  .site-footer {
+    padding-bottom: calc(48px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 390px) {
+  .content-width {
+    width: calc(100% - 28px);
+  }
+
+  .site-nav {
+    padding-inline: 22px;
+  }
+
+  .site-nav a {
+    font-size: 25px;
+    line-height: 1.18;
+  }
+
+  .hero h1 {
+    font-size: clamp(40px, 11.8vw, 46px);
+  }
+
+  .section-head h2,
+  .about-title h2,
+  .inquiry-copy h2 {
+    font-size: 34px;
+  }
+
+  .fabrication-intro h2 {
+    font-size: 37px;
+  }
+}
