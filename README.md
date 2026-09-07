@@ -30,6 +30,8 @@ Reine statische Demo ohne Build-Schritt:
 
 Damit kann die Seite später unkompliziert über einen separaten Preview-Host veröffentlicht werden.
 
+Netlify-Preview ist ausschließlich mit diesem separaten Larasser-Repository verbunden.
+
 ## Wichtig vor Produktion
 
 Vor einer echten Veröffentlichung:
