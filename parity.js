@@ -6,6 +6,15 @@
   const nav = document.querySelector('.site-nav');
   const dropdown = document.querySelector('.nav-dropdown');
   const dropdownButton = dropdown?.querySelector(':scope > button');
+  const dropdownMenu = dropdown?.querySelector('.nav-dropdown-menu');
+
+  if (dropdownMenu && !dropdownMenu.querySelector('a[href*="sonderanfertigungen"]')) {
+    const link = document.createElement('a');
+    link.href = `${root}/referenzen/sonderanfertigungen/`;
+    link.textContent = 'Sonderanfertigungen';
+    const production = [...dropdownMenu.querySelectorAll('a')].find((item) => item.href.includes('lohnbiegen-and-lohnschneiden'));
+    dropdownMenu.insertBefore(link, production || null);
+  }
 
   const closeNav = () => {
     document.body.classList.remove('nav-open');
@@ -163,6 +172,21 @@
     const note = form.querySelector('.form-note');
     const endpoint = window.LARASSER_CONFIG?.formEndpoint || '';
     const recipient = window.LARASSER_CONFIG?.recipient || 'info@larasser-metallbau.de';
+    const projectSelect = form.querySelector('select[name="project-type"]');
+
+    if (projectSelect && ![...projectSelect.options].some((option) => option.value === 'Sonderanfertigungen')) {
+      const option = document.createElement('option');
+      option.value = option.textContent = 'Sonderanfertigungen';
+      const productionOption = [...projectSelect.options].find((item) => item.value === 'Lohnbiegen & Lohnschneiden');
+      projectSelect.add(option, productionOption ? productionOption.index : undefined);
+    }
+
+    if (projectSelect) {
+      const requestedProject = new URLSearchParams(window.location.search).get('projekt');
+      if (requestedProject && [...projectSelect.options].some((option) => option.value === requestedProject)) {
+        projectSelect.value = requestedProject;
+      }
+    }
 
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
