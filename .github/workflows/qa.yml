@@ -19,6 +19,7 @@ jobs:
       - name: JavaScript syntax
         run: |
           node --check parity.js
+          node --check product-inquiry.js
           node --check launch-config.js
           node --check .github/parity-browser-qa.mjs
 
@@ -27,6 +28,9 @@ jobs:
           test -f index.html
           test -f parity.css
           test -f parity.js
+          test -f reference-hub.css
+          test -f product-inquiry.css
+          test -f product-inquiry.js
           test -f launch-config.js
           test -f robots.txt
           test -f sitemap.xml
@@ -48,6 +52,7 @@ jobs:
           test -f referenzen/carports-dacher-and-stahlbau/index.html
           test -f referenzen/interior/index.html
           test -f referenzen/medallions/index.html
+          test -f referenzen/sonderanfertigungen/index.html
           test -f referenzen/lohnbiegen-and-lohnschneiden/index.html
           test -f uber-uns/index.html
           test -f kontakt/index.html
@@ -59,10 +64,15 @@ jobs:
           grep -q 'Unverbindliche technische Vorschau' index.html
           grep -q 'EN 1090-2 EXC2' index.html
           grep -q 'assets/larasser-logo-mark.svg' parity.css
+          grep -q 'Sonderanfertigungen' referenzen/index.html
+          grep -q 'data-part-inquiry' referenzen/lohnbiegen-and-lohnschneiden/index.html
+          grep -q 'Bauteil anfragen' referenzen/lohnbiegen-and-lohnschneiden/index.html
           grep -q '/treppen-1/ /referenzen/treppen-and-gelander/ 301' _redirects
+          ! grep -q '>29<' index.html
+          ! grep -q 'Mitarbeiter</span>' index.html
           test "$(find assets/source -maxdepth 1 -type f ! -name manifest.json | wc -l)" -eq 190
           node -e "const m=require('./assets/source/manifest.json'); if(m.count!==190) process.exit(1)"
-          ! grep -R -qE 'https://www\.larasser-metallbau\.de/wp-content/uploads/' index.html parity.css parity.js referenzen uber-uns kontakt impressum datenschutzerklarung
+          ! grep -R -qE 'https://www\.larasser-metallbau\.de/wp-content/uploads/' index.html parity.css parity.js reference-hub.css product-inquiry.css product-inquiry.js referenzen uber-uns kontakt impressum datenschutzerklarung
 
       - name: Static content and local asset integrity
         run: |
@@ -80,6 +90,7 @@ jobs:
               Path('referenzen/carports-dacher-and-stahlbau/index.html'),
               Path('referenzen/interior/index.html'),
               Path('referenzen/medallions/index.html'),
+              Path('referenzen/sonderanfertigungen/index.html'),
               Path('referenzen/lohnbiegen-and-lohnschneiden/index.html'),
               Path('uber-uns/index.html'),
               Path('kontakt/index.html'),
@@ -118,13 +129,22 @@ jobs:
           assert len(json.loads(Path('data/interior.json').read_text())['projects']) == 9
           assert len(json.loads(Path('data/medallions.json').read_text())['images']) == 44
 
+          special = Path('referenzen/sonderanfertigungen/index.html').read_text(encoding='utf-8')
+          assert special.count('<article class="project">') == 6
+          for name in ['Schachtisch', 'Feuerschale', 'Stehleuchte', 'Gastronomieeinrichtung', 'Grafinger Bär', 'Sisyphus']:
+              assert name in special, f'Sonderanfertigung missing: {name}'
+
+          production = Path('referenzen/lohnbiegen-and-lohnschneiden/index.html').read_text(encoding='utf-8')
+          for token in ['data-part-inquiry', 'Rechteck', 'Rahmen', 'Dreieck', 'Freiform / Zeichnung', 'Bohrungsdurchmesser']:
+              assert token in production, f'Bauteilanfrage token missing: {token}'
+
           sitemap = Path('sitemap.xml').read_text(encoding='utf-8')
           for route in [
               '/referenzen/', '/referenzen/interior/', '/referenzen/balkone-and-terrassen/',
               '/referenzen/tore-and-zaune/', '/referenzen/treppen-and-gelander/',
               '/referenzen/carports-dacher-and-stahlbau/', '/referenzen/medallions/',
-              '/referenzen/lohnbiegen-and-lohnschneiden/', '/uber-uns/', '/kontakt/',
-              '/impressum/', '/datenschutzerklarung/'
+              '/referenzen/sonderanfertigungen/', '/referenzen/lohnbiegen-and-lohnschneiden/',
+              '/uber-uns/', '/kontakt/', '/impressum/', '/datenschutzerklarung/'
           ]:
               assert f'https://www.larasser-metallbau.de{route}' in sitemap, f'sitemap route missing: {route}'
 
@@ -149,12 +169,16 @@ jobs:
             /referenzen/treppen-and-gelander/ \
             /referenzen/carports-dacher-and-stahlbau/ \
             /referenzen/medallions/ \
+            /referenzen/sonderanfertigungen/ \
             /referenzen/lohnbiegen-and-lohnschneiden/ \
             /uber-uns/ \
             /kontakt/ \
             /impressum/ \
             /datenschutzerklarung/ \
             /assets/larasser-logo-mark.svg \
+            /reference-hub.css \
+            /product-inquiry.css \
+            /product-inquiry.js \
             /data/treppen.json; do
               curl --fail --silent --show-error "http://127.0.0.1:8080${path}" >/dev/null
           done
