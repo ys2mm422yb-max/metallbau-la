@@ -135,7 +135,7 @@ jobs:
               assert name in special, f'Sonderanfertigung missing: {name}'
 
           production = Path('referenzen/lohnbiegen-and-lohnschneiden/index.html').read_text(encoding='utf-8')
-          for token in ['data-part-inquiry', 'Rechteck', 'Rahmen', 'Dreieck', 'Freiform / Zeichnung', 'Bohrungsdurchmesser']:
+          for token in ['data-part-inquiry', 'Blechzuschnitt', 'Biegeteil', 'Zuschnitt + Biegung', 'Sonderteil nach Zeichnung', 'Biegewinkel', 'Anzahl Biegungen']:
               assert token in production, f'Bauteilanfrage token missing: {token}'
 
           sitemap = Path('sitemap.xml').read_text(encoding='utf-8')
