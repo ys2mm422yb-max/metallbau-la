@@ -11,6 +11,20 @@
   contain-intrinsic-size: 520px;
 }
 
+/* Keep every project lead inside its clipping frame in all pointer states. */
+.reference-image img {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  object-fit: cover;
+  transform: none !important;
+}
+
+.reference-image:hover img,
+.reference-image:focus-visible img {
+  transform: none !important;
+}
+
 .source-reference-card .reference-copy p {
   margin-top: 10px;
 }
