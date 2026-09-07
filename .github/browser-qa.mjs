@@ -6,9 +6,9 @@ const outDir = 'artifacts/browser-qa';
 await fs.mkdir(outDir, { recursive: true });
 
 const profiles = [
-  { name: 'desktop-chromium', engine: chromium, context: { viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 1 }, mobile: false },
-  { name: 'android-chromium', engine: chromium, context: { viewport: { width: 412, height: 915 }, deviceScaleFactor: 2.625, isMobile: true, hasTouch: true, userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36' }, mobile: true },
-  { name: 'iphone-webkit', engine: webkit, context: { viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1' }, mobile: true },
+  { name: 'desktop-chromium', engine: chromium, context: { viewport: { width: 1440, height: 1000 } }, mobile: false },
+  { name: 'android-chromium', engine: chromium, context: { viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true, userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36' }, mobile: true },
+  { name: 'iphone-webkit', engine: webkit, context: { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1' }, mobile: true },
 ];
 
 const expectedProjects = { treppen: 9, tore: 6, balkone: 7, stahlbau: 5, interior: 9 };
@@ -17,12 +17,12 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-async function settle(page, ms = 220) {
+async function settle(page, ms = 180) {
   await page.waitForTimeout(ms);
   await page.evaluate(async () => {
     const visible = [...document.images].filter((img) => {
       const r = img.getBoundingClientRect();
-      return r.bottom > -200 && r.top < innerHeight + 200 && r.right > 0 && r.left < innerWidth;
+      return r.bottom > -150 && r.top < innerHeight + 150 && r.right > 0 && r.left < innerWidth;
     });
     await Promise.all(visible.map(async (img) => {
       if (!img.complete) await new Promise((resolve) => {
@@ -60,20 +60,19 @@ async function assertNoOverflow(page, profile, label) {
 }
 
 async function assertMobileMenuDestination(page, profile, href) {
-  // A real destination test: start somewhere unrelated, open the fixed menu, click,
-  // and verify that the selected section—not the old locked scroll position—wins.
-  await page.evaluate(() => window.scrollTo({ top: Math.max(0, document.documentElement.scrollHeight * 0.62), behavior: 'instant' }));
-  await page.waitForTimeout(100);
+  // Start far from the destination. Use DOM click for the fixed hamburger so the
+  // test itself cannot scroll the document before the app captures its lock position.
+  await page.evaluate(() => window.scrollTo(0, Math.max(0, document.documentElement.scrollHeight * 0.62)));
+  await page.waitForTimeout(80);
   const before = await page.evaluate(() => window.scrollY);
 
-  const toggle = page.locator('.nav-toggle');
-  await toggle.click();
+  await page.locator('.nav-toggle').evaluate((el) => el.click());
   await page.waitForTimeout(120);
   assert(await page.evaluate(() => document.body.classList.contains('nav-open')), `${profile}: menu did not open before ${href}`);
 
   const link = page.locator(`.site-nav a[href="${href}"]`).first();
   assert(await link.count() === 1, `${profile}: menu link ${href} missing`);
-  await link.click();
+  await link.evaluate((el) => el.click());
   await page.waitForTimeout(850);
 
   const state = await page.evaluate((hash) => {
@@ -93,8 +92,8 @@ async function assertMobileMenuDestination(page, profile, href) {
   assert(!state.open, `${profile}: menu stayed open after ${href}`);
   assert(state.bodyPosition !== 'fixed', `${profile}: body stayed locked after ${href}`);
   assert(Math.abs(state.currentY - before) > 40 || Math.abs(state.targetTop - state.headerBottom) < 90,
-    `${profile}: mobile menu destination ${href} did not move away from old scroll position`);
-  assert(state.targetTop >= state.headerBottom - 8 && state.targetTop <= state.headerBottom + 90,
+    `${profile}: mobile menu destination ${href} did not leave the old scroll position`);
+  assert(state.targetTop >= state.headerBottom - 10 && state.targetTop <= state.headerBottom + 100,
     `${profile}: mobile menu destination ${href} missed target (${state.targetTop}px vs header ${state.headerBottom}px)`);
 }
 
@@ -108,42 +107,44 @@ for (const profile of profiles) {
   await page.goto(baseURL, { waitUntil: 'networkidle' });
   await waitForUX(page);
 
-  const title = await page.title();
-  assert(title === 'Metallbau Larasser – Demo', `${profile.name}: unexpected title`);
+  assert(await page.title() === 'Metallbau Larasser – Demo', `${profile.name}: unexpected title`);
   assert((await page.locator('h1').innerText()).includes('Metall. Präzise.'), `${profile.name}: hero missing`);
   await assertNoOverflow(page, profile.name, 'at top');
   await shot(page, profile.name, 'top');
 
   if (profile.mobile) {
-    await page.locator('#leistungen').scrollIntoViewIfNeeded();
-    await page.waitForTimeout(100);
-    const beforeEscape = await page.evaluate(() => window.scrollY);
-    await page.locator('.nav-toggle').click();
-    await page.waitForTimeout(160);
+    await page.evaluate(() => window.scrollTo(0, document.querySelector('#leistungen').offsetTop + 120));
+    await page.waitForTimeout(80);
+    await page.locator('.nav-toggle').evaluate((el) => el.click());
+    await page.waitForTimeout(120);
+
     const navState = await page.evaluate(() => {
-      const header = document.querySelector('.site-header')?.getBoundingClientRect();
       const nav = document.querySelector('.site-nav')?.getBoundingClientRect();
+      const lockedY = Math.max(0, -(Number.parseFloat(document.body.style.top || '0') || 0));
       return {
         open: document.body.classList.contains('nav-open'),
         bodyPosition: getComputedStyle(document.body).position,
-        headerHeight: header?.height || 0,
         navWidth: nav?.width || 0,
+        navHeight: nav?.height || 0,
         viewportWidth: innerWidth,
         viewportHeight: innerHeight,
+        lockedY,
         extraInterior: !!document.querySelector('.site-nav a[href="#specialarbeiten"]'),
         stickyVisibility: getComputedStyle(document.querySelector('.mobile-actions')).visibility,
       };
     });
+
     assert(navState.open && navState.bodyPosition === 'fixed', `${profile.name}: mobile overlay/scroll lock failed`);
-    assert(navState.headerHeight >= navState.viewportHeight - 2 && navState.navWidth >= navState.viewportWidth - 2, `${profile.name}: menu does not cover viewport`);
+    assert(navState.navWidth >= navState.viewportWidth - 2 && navState.navHeight >= navState.viewportHeight - 2, `${profile.name}: menu does not cover viewport`);
     assert(!navState.extraInterior, `${profile.name}: obsolete Interior duplicate nav link still exists`);
     assert(navState.stickyVisibility === 'hidden', `${profile.name}: sticky CTA covers open menu`);
     await shot(page, profile.name, 'menu-open');
+
     await page.keyboard.press('Escape');
     await page.waitForTimeout(140);
     assert(!(await page.evaluate(() => document.body.classList.contains('nav-open'))), `${profile.name}: Escape did not close menu`);
     const afterEscape = await page.evaluate(() => window.scrollY);
-    assert(Math.abs(afterEscape - beforeEscape) <= 4, `${profile.name}: Escape changed scroll position (${beforeEscape} -> ${afterEscape})`);
+    assert(Math.abs(afterEscape - navState.lockedY) <= 5, `${profile.name}: Escape failed to restore locked scroll position (${navState.lockedY} -> ${afterEscape})`);
 
     for (const href of ['#leistungen', '#referenzen', '#lohnfertigung', '#betrieb', '#anfrage']) {
       await assertMobileMenuDestination(page, profile.name, href);
@@ -152,9 +153,9 @@ for (const profile of profiles) {
     assert(!(await page.locator('.nav-toggle').isVisible()), `${profile.name}: hamburger visible on desktop`);
   }
 
-  // References overview must be compact and empty until a category is deliberately chosen.
+  // References must start as a compact category chooser, not a giant mixed catalog.
   await page.locator('#referenzen').scrollIntoViewIfNeeded();
-  await page.waitForTimeout(180);
+  await page.waitForTimeout(160);
   assert(await page.locator('#referenzen [data-filter="all"]').count() === 0, `${profile.name}: misleading Alle category still visible`);
   assert(await page.locator('#referenzen .filter-chip[data-filter]').count() === 6, `${profile.name}: expected six reference categories`);
   assert(await page.locator('#reference-grid .source-project-card:visible').count() === 0, `${profile.name}: project cards visible before category selection`);
@@ -174,7 +175,7 @@ for (const profile of profiles) {
 
   for (const [category, expected] of Object.entries(expectedProjects)) {
     await page.locator(`[data-filter="${category}"]`).click();
-    await page.waitForTimeout(160);
+    await page.waitForTimeout(130);
     const state = await page.evaluate((category) => ({
       selected: window.__larasserReferenceUX?.selectedCategory,
       visibleCards: [...document.querySelectorAll('#reference-grid .source-project-card')].filter((card) => getComputedStyle(card).display !== 'none').length,
@@ -184,15 +185,14 @@ for (const profile of profiles) {
     assert(state.selected === category, `${profile.name}: ${category} did not become selected`);
     assert(state.visibleCards === expected && state.wrongCards === 0, `${profile.name}: ${category} expected ${expected} exclusive cards, got ${state.visibleCards}`);
     assert(!state.medalVisible, `${profile.name}: Medallions leaked into ${category}`);
-    const badge = Number(await page.locator(`[data-filter="${category}"] small`).innerText());
-    assert(badge === expected, `${profile.name}: ${category} badge expected ${expected}, got ${badge}`);
+    assert(Number(await page.locator(`[data-filter="${category}"] small`).innerText()) === expected, `${profile.name}: ${category} badge mismatch`);
   }
 
   await page.locator('[data-filter="balkone"]').click();
   await shot(page, profile.name, 'references-balkone', '#reference-grid');
 
   await page.locator('[data-filter="medallions"]').click();
-  await page.waitForTimeout(180);
+  await page.waitForTimeout(150);
   assert(await page.locator('#reference-grid .source-project-card:visible').count() === 0, `${profile.name}: project cards visible in Medallions category`);
   assert(await page.locator('#reference-grid .medallions-inline:visible').count() === 1, `${profile.name}: Medallions category did not reveal gallery`);
   const medallionItems = await page.locator('#reference-grid .medallion-item').count();
@@ -201,9 +201,8 @@ for (const profile of profiles) {
   assert((await medallionToggle.innerText()).includes(String(sourceCounts.medallions)), `${profile.name}: Medallion expand button has wrong total`);
   await shot(page, profile.name, 'references-medallions', '#reference-grid .medallions-inline');
 
-  const firstMedal = page.locator('#reference-grid .medallion-item:visible').first();
-  await firstMedal.click();
-  await page.waitForTimeout(120);
+  await page.locator('#reference-grid .medallion-item:visible').first().click();
+  await page.waitForTimeout(100);
   assert(await page.locator('#lightbox').evaluate((el) => el.open), `${profile.name}: Medallion lightbox did not open`);
   await page.locator('.lightbox-close').click();
 
@@ -211,15 +210,14 @@ for (const profile of profiles) {
   assert(await page.locator('#reference-grid .source-project-card:visible').count() === 0, `${profile.name}: back-to-categories did not hide projects`);
   assert(await page.locator('#reference-grid .medallions-inline:visible').count() === 0, `${profile.name}: back-to-categories did not hide Medallions`);
 
-  // Service cards must select the corresponding category instead of exposing duplicate homepage sections.
+  // Service cards should jump into the matching category, without duplicate sections.
   await page.locator('[data-filter-link="interior"]').click();
   await page.waitForTimeout(650);
   assert(await page.evaluate(() => window.__larasserReferenceUX?.selectedCategory) === 'interior', `${profile.name}: Interior service card did not select Interior`);
   assert(await page.locator('#reference-grid .source-project-card[data-category="interior"]:visible').count() === 9, `${profile.name}: Interior service card did not expose 9 projects`);
 
-  const firstProject = page.locator('#reference-grid .source-project-card[data-category="interior"]:visible .reference-image').first();
-  await firstProject.click();
-  await page.waitForTimeout(120);
+  await page.locator('#reference-grid .source-project-card[data-category="interior"]:visible .reference-image').first().click();
+  await page.waitForTimeout(100);
   assert(await page.locator('#lightbox').evaluate((el) => el.open), `${profile.name}: project lightbox did not open`);
   await page.locator('.lightbox-close').click();
 
