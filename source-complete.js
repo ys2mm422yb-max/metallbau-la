@@ -16,13 +16,31 @@
   const nav = document.querySelector('.site-nav');
   const navToggle = document.querySelector('.nav-toggle');
 
-  function unlockMenuAt(restoreY) {
+  function unlockMenuAt(restoreY, afterUnlock) {
     const body = document.body;
+    const root = document.documentElement;
+    const previousScrollBehavior = root.style.scrollBehavior;
+    const safeY = Number.isFinite(restoreY) ? Math.max(0, restoreY) : null;
+
+    // CSS enables smooth scrolling globally. A plain scrollTo() would therefore
+    // animate the menu restoration and leave Chromium/WebKit half-way down the
+    // page for a noticeable moment. Force an instant restoration while the fixed
+    // body lock is released, then verify it once layout has settled.
+    root.style.scrollBehavior = 'auto';
     body.classList.remove('nav-open');
     Object.assign(body.style, { position: '', top: '', left: '', right: '', width: '' });
     navToggle?.setAttribute('aria-expanded', 'false');
     navToggle?.setAttribute('aria-label', 'Navigation öffnen');
-    if (Number.isFinite(restoreY)) window.scrollTo(0, Math.max(0, restoreY));
+
+    if (safeY != null) window.scrollTo({ top: safeY, left: 0, behavior: 'auto' });
+
+    requestAnimationFrame(() => {
+      if (safeY != null) window.scrollTo({ top: safeY, left: 0, behavior: 'auto' });
+      requestAnimationFrame(() => {
+        root.style.scrollBehavior = previousScrollBehavior;
+        afterUnlock?.();
+      });
+    });
   }
 
   function closeMenuAndNavigate(anchor, target) {
@@ -31,13 +49,12 @@
     const lockedY = menuOpen
       ? Math.max(0, -(Number.parseFloat(body.style.top || '0') || 0))
       : window.scrollY;
-    const absoluteTargetTop = lockedY + target.getBoundingClientRect().top;
 
-    unlockMenuAt(lockedY);
-
-    requestAnimationFrame(() => {
+    // Measure the target only after the body is unlocked. Mobile browsers can
+    // report misleading target geometry while the whole document is position:fixed.
+    unlockMenuAt(lockedY, () => {
       const headerHeight = document.querySelector('.site-header')?.getBoundingClientRect().height || 0;
-      const top = Math.max(0, absoluteTargetTop - headerHeight - 14);
+      const top = Math.max(0, window.scrollY + target.getBoundingClientRect().top - headerHeight - 14);
       window.scrollTo({ top, behavior: 'smooth' });
       history.replaceState?.(null, '', anchor.getAttribute('href'));
     });
