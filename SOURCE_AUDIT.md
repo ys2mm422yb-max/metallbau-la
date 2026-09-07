@@ -6,7 +6,7 @@ Audit date: 2026-09-07
 
 ## Rule
 
-The redesign should be better in navigation, readability, responsiveness and conversion while preserving the useful public information and project breadth of the current Larasser site. Conflicting or inaccessible claims are not guessed.
+The redesign should be better in navigation, readability, responsiveness and conversion while preserving the useful public information and project breadth of the current Larasser site. Conflicting claims are not guessed.
 
 ## Public sections reviewed
 
@@ -61,6 +61,29 @@ Verified project groups:
 - 2024 Carport mit Trapezblechdach
 - 2024 Carport für drei Fahrzeuge
 
+### Interior & Metallgestaltung
+The direct web parser did not reliably extract this page, so the missing section was reviewed from the actual public page in supplied Safari screenshots. Verified page introduction:
+- Larasser describes close collaboration to design, plan, manufacture and install individual wishes for living spaces and gardens.
+
+Verified Interior project groups and source wording/content:
+- 2023 Schachtisch — hidden chessboard concept, forged pieces; public page states it received the Meisterpreis
+- 2023 Feuerschale — project from Martin Larasser's Meisterschule 2022/23; customer-specific planning is emphasized
+- 2021 Stehleuchte — Gesellenstück by Martin Larasser; public page states first prize in “Gute Form”
+- 2004 Sisyphus — forged from old carriage axles and a local boulder; located by the Heimatmuseum in Grafing according to the page
+- 2002 Badeinrichtung — gas-pressure-adjustable mirror, stainless-steel frame/structure and wooden shelf
+- 2020 Grafinger Bär — bronze bear with chiselled contours, coloured and waxed
+- 2020 Schale / “The Space Between Us” — two curved metal surfaces, made during Martin Larasser's training in the Schmiede Peter Michael Reich
+- Gastronomieeinrichtung — individual solutions for commercial customers; year was not clearly readable in the source screenshots and is therefore not claimed
+- 2018 Holzlege — wood storage and floor plate in scaled/oxidised steel, matched to the stove
+
+### Medallions
+The direct web parser did not reliably extract this page, so it was reviewed from the actual public page in supplied Safari screenshots. Verified:
+- medallions are made from bronze
+- hand-made stamps are used under glowing heat
+- finishes shown/described include gilded, coloured, tin-plated and untreated, including combinations
+- Larasser offers individually designed medallions and stamps for unique motifs
+- the public page contains a broad gallery of different forms, motifs, hole patterns and surface treatments
+
 ### Lohnbiegen & Lohnschneiden
 Verified machine facts:
 - Baykal APHS 31160: 3100 mm Biegelänge, 160 t Presskraft, CNC-Steuerung, Stahl/Edelstahl/Aluminium/weitere Metalle, breite Werkzeugpalette, Falzen möglich
@@ -94,27 +117,21 @@ Do not turn these into claims without client confirmation:
 
 Current demo therefore keeps `seit 1996`, `2 Meister` and `EN 1090-2 EXC2` as the safer prominent facts and uses `info@larasser-metallbau.de` as the central demo mail target.
 
-## Sections not fully retrievable by the audit tooling
-
-The navigation confirms separate public sections for:
-- Interior
-- Medallions
-
-Their pages could not be reliably extracted by the web parser during this audit. The demo must not invent project names, specifications or descriptions for them. Until their contents can be verified directly, the demo preserves discoverability by linking to the existing official sections.
-
 ## Current demo parity status
 
-Verified on the current redesign branch:
+Verified/implemented on the redesign branch:
 - mobile navigation is a full-screen layer with background scroll locking/restoration for iOS/Android
 - mobile header is opaque so scrolling content cannot visually bleed through it
-- mobile typography has relaxed headline sizing, line-height and letter-spacing to avoid cramped/overlapping text
+- mobile typography uses controlled headline sizing, line-height and letter-spacing to avoid cramped/overlapping text
 - reference and machine images are clipped to explicit frames/aspect ratios instead of protruding outside cards
 - all verified Treppen/Tore/Balkone/Stahlbau project groups above are represented either as detailed cards or in the filterable archive
-- several Treppen/Tore projects now have multi-image lightbox galleries using images from the public Larasser site
+- several Treppen/Tore projects have multi-image lightbox galleries using public Larasser images
+- Interior is now a first-class section with all nine verified project groups above instead of an external placeholder link
+- Medallions now has its own content panel, materials/finish information, project filter and inquiry option
+- reference discovery includes category filters, counts, search and a progressively disclosed project archive
 - Lohnbiegen/Lohnschneiden contains both Baykal machines, images and the verified specifications above
 - contact section includes central phone, opening hours and the two verified mobile numbers; footer retains the verified fax
 - public Impressum and Datenschutz remain directly reachable
-- Interior and Medallions remain explicitly linked to the official public sections rather than being fabricated
 - demo remains `noindex,nofollow` and has no server-side form storage
 
 ## Visual / technical parity requirements
@@ -129,17 +146,19 @@ A change is not considered ready just because static checks pass. Before merge, 
 - reference and machine images contained by their frames
 - heading/label spacing not overlapping
 - fixed header not covering anchor targets
-- filter and lightbox interactions
+- filter, search, archive disclosure and lightbox interactions
+- Interior and Medallions discoverability/content coverage
 - Lohnfertigung prefill into inquiry form
 - console/page errors
 - screenshots reviewed visually after the automated run
 
-## Remaining content work before a production replacement
+## Remaining production work
 
-- obtain/confirm full Interior project content and images
-- obtain/confirm full Medallions project content and images
+These are production/handoff items, not reasons to invent content in the demo:
+- obtain explicit client approval for final text, branding and image usage
+- obtain the original Interior/Medallions image files or approved local copies rather than relying on screenshots/hotlinks
 - choose the final subset/order of project photos with Larasser
-- host approved images locally instead of hotlinking the existing website
+- host all approved images locally and privacy-safely instead of hotlinking the existing website
 - confirm which public email address should be primary
 - confirm current employee count and any experience counter before displaying either
-- client review of legal pages and real form processing before production launch
+- client/legal review of Impressum, Datenschutz and real form processing before production launch
