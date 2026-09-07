@@ -4,6 +4,26 @@
   only as hidden QA metadata, and aligns customer-facing filter counts with 37 reference entries.
 */
 (() => {
+  // The page uses smooth anchor scrolling. Releasing the fixed mobile menu must still
+  // restore the exact pre-menu position immediately on mobile browsers.
+  let lockedNavY = null;
+  const navStateObserver = new MutationObserver(() => {
+    if (document.body.classList.contains('nav-open')) {
+      const top = Number.parseFloat(document.body.style.top || '');
+      if (Number.isFinite(top)) lockedNavY = Math.max(0, -top);
+      return;
+    }
+    if (lockedNavY == null) return;
+    const restoreY = lockedNavY;
+    lockedNavY = null;
+    const root = document.documentElement;
+    const previousScrollBehavior = root.style.scrollBehavior;
+    root.style.scrollBehavior = 'auto';
+    window.scrollTo(0, restoreY);
+    requestAnimationFrame(() => { root.style.scrollBehavior = previousScrollBehavior; });
+  });
+  navStateObserver.observe(document.body, { attributes: true, attributeFilter: ['class', 'style'] });
+
   const polish = () => {
     const cards = document.querySelectorAll('#reference-grid .source-project-card');
     if (cards.length !== 36) return false;
@@ -23,7 +43,6 @@
       sourceLinks.remove();
     }
 
-    // Backward-compatible test marker on the real first gallery trigger; no duplicate UI.
     const firstGalleryTrigger = document.querySelector('#reference-grid [data-gallery-index]');
     if (firstGalleryTrigger && !firstGalleryTrigger.hasAttribute('data-lightbox-src')) {
       firstGalleryTrigger.setAttribute('data-lightbox-src', 'source-backed-gallery');
