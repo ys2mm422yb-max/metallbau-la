@@ -1,0 +1,152 @@
+.reference-context {
+  margin: 20px 0 0;
+  max-width: 850px;
+  color: rgba(255,255,255,.68);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.source-reference-card {
+  content-visibility: auto;
+  contain-intrinsic-size: 520px;
+}
+
+.source-reference-card .reference-copy p {
+  margin-top: 10px;
+}
+
+.source-medallion-card {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(260px,.75fr) minmax(280px,1fr);
+  align-items: stretch;
+}
+
+.source-medallion-card > .reference-image {
+  height: 100%;
+  min-height: 420px;
+}
+
+.source-medallion-card .reference-copy {
+  align-self: start;
+}
+
+.medallion-gallery {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0,1fr));
+  gap: 8px;
+  padding: 0 20px 22px;
+}
+
+.medallion-thumb {
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid rgba(255,255,255,.08);
+  background: #111315;
+  overflow: hidden;
+  cursor: zoom-in;
+}
+
+.medallion-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform .25s ease, filter .25s ease;
+}
+
+.medallion-thumb:hover img,
+.medallion-thumb:focus-visible img {
+  transform: scale(1.035);
+  filter: brightness(1.06);
+}
+
+.special-project img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  margin-bottom: 16px;
+}
+
+.company-data {
+  margin-top: 30px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.company-data strong {
+  color: var(--ink);
+}
+
+.contact-alt {
+  margin-top: 12px;
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  color: #555b60;
+}
+
+.contact-alt a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 980px) {
+  .source-medallion-card {
+    grid-template-columns: 1fr;
+  }
+
+  .source-medallion-card > .reference-image {
+    min-height: 330px;
+    height: 360px;
+  }
+
+  .medallion-gallery {
+    grid-template-columns: repeat(4, minmax(0,1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .reference-context {
+    margin-top: 14px;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .source-reference-card .reference-image {
+    height: 270px;
+  }
+
+  .source-reference-card .reference-copy {
+    padding: 17px 17px 20px;
+  }
+
+  .source-reference-card .reference-copy h3 {
+    font-size: 21px;
+  }
+
+  .source-reference-card .reference-copy p {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .source-medallion-card > .reference-image {
+    height: 300px;
+    min-height: 0;
+  }
+
+  .medallion-gallery {
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    padding: 0 16px 18px;
+    gap: 6px;
+  }
+
+  .special-project img {
+    aspect-ratio: 16 / 10;
+    margin-bottom: 12px;
+  }
+}
