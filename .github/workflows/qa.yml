@@ -1,0 +1,60 @@
+name: Static Site QA
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: JavaScript syntax
+        run: node --check script.js
+
+      - name: Required files and demo safeguards
+        run: |
+          test -f index.html
+          test -f styles.css
+          test -f script.js
+          grep -q 'noindex,nofollow' index.html
+          grep -q 'Unverbindliche Design-Demo' index.html
+          grep -q 'EN 1090-2 EXC2' index.html
+          grep -q 'info@larasser-metallbau.de' index.html
+
+      - name: Serve static site
+        run: |
+          python3 -m http.server 8080 >/tmp/metallbau-la-http.log 2>&1 &
+          SERVER_PID=$!
+          sleep 2
+          curl --fail --silent --show-error http://127.0.0.1:8080/ > /tmp/index-rendered.html
+          grep -q '<title>Metallbau Larasser – Demo</title>' /tmp/index-rendered.html
+          kill $SERVER_PID
+
+      - name: Basic markup checks
+        run: |
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+
+          html = Path('index.html').read_text(encoding='utf-8')
+          required_ids = ['main', 'leistungen', 'referenzen', 'lohnfertigung', 'betrieb', 'anfrage', 'project-form']
+          for element_id in required_ids:
+              assert f'id="{element_id}"' in html, f'Missing id: {element_id}'
+
+          class Parser(HTMLParser):
+              def error(self, message):
+                  raise AssertionError(message)
+
+          Parser().feed(html)
+          assert html.count('<h1') == 1, 'Expected exactly one H1'
+          assert 'mailto:info@larasser-metallbau.de' in html, 'Missing central mail contact'
+          print('Basic markup checks passed')
+          PY
