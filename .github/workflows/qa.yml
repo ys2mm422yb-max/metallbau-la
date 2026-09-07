@@ -18,111 +18,146 @@ jobs:
 
       - name: JavaScript syntax
         run: |
-          node --check script.js
-          node --check source-complete.js
+          node --check parity.js
           node --check launch-config.js
-          node --check launch-ready.js
-          node --check scripts/prepare-launch.mjs
-          node --check scripts/localize-assets.mjs
-          node --check .github/browser-qa.mjs
-          node --check .github/source-complete-qa.mjs
-          node --check .github/visual-extra-qa.mjs
+          node --check .github/parity-browser-qa.mjs
 
-      - name: Required files and demo safeguards
+      - name: Required files and prelaunch safeguards
         run: |
           test -f index.html
-          test -f styles.css
-          test -f visual-fixes.css
-          test -f source-complete.css
-          test -f script.js
-          test -f source-complete.js
+          test -f parity.css
+          test -f parity.js
           test -f launch-config.js
-          test -f launch-ready.js
           test -f robots.txt
           test -f sitemap.xml
           test -f 404.html
-          test -f LAUNCH_CHECKLIST.md
-          test -f assets/source/manifest.json
+          test -f PARITY_PLAN.md
           test -f SOURCE_AUDIT.md
+          test -f assets/larasser-logo-mark.svg
+          test -f assets/source/manifest.json
           test -f data/treppen.json
           test -f data/tore.json
           test -f data/balkone.json
           test -f data/stahlbau.json
           test -f data/interior.json
           test -f data/medallions.json
-          test -f .github/browser-qa.mjs
-          test -f .github/source-complete-qa.mjs
-          test -f .github/visual-extra-qa.mjs
-          grep -q 'noindex,nofollow' index.html
+          test -f referenzen/index.html
+          test -f referenzen/treppen-and-gelander/index.html
+          test -f referenzen/tore-and-zaune/index.html
+          test -f referenzen/balkone-and-terrassen/index.html
+          test -f referenzen/carports-dacher-and-stahlbau/index.html
+          test -f referenzen/interior/index.html
+          test -f referenzen/medallions/index.html
+          test -f referenzen/lohnbiegen-and-lohnschneiden/index.html
+          test -f uber-uns/index.html
+          test -f kontakt/index.html
+          test -f impressum/index.html
+          test -f datenschutzerklarung/index.html
+          test -f treppen-1/index.html
           grep -q 'Disallow: /' robots.txt
-          grep -q 'Unverbindliche Design-Demo' index.html
-          grep -q 'EN 1090-2 EXC2' index.html
-          grep -q 'info@larasser-metallbau.de' index.html
-          grep -q 'source-complete.js' index.html
-          grep -q 'source-complete.css' index.html
-          grep -q 'launch-ready.js' index.html
           grep -q "formEndpoint: ''" launch-config.js
-          ! grep -R -qE 'https://www\.larasser-metallbau\.de/wp-content/uploads/' index.html styles.css source-complete.css visual-fixes.css script.js source-complete.js app-v4.js refs-*.js data/*.json
+          grep -q 'Unverbindliche technische Vorschau' index.html
+          grep -q 'EN 1090-2 EXC2' index.html
+          grep -q 'assets/larasser-logo-mark.svg' parity.css
+          grep -q '/treppen-1/ /referenzen/treppen-and-gelander/ 301' _redirects
           test "$(find assets/source -maxdepth 1 -type f ! -name manifest.json | wc -l)" -eq 190
           node -e "const m=require('./assets/source/manifest.json'); if(m.count!==190) process.exit(1)"
-          grep -q "visual-fixes.css" script.js
-          grep -q "Schachtisch" script.js
-          grep -q "medallionsDescription" script.js
-          grep -q "data/treppen.json" script.js
-          grep -q "data/medallions.json" script.js
-          grep -q "references-awaiting-selection" source-complete.js
-          grep -q "references-awaiting-selection" source-complete.css
-          grep -q "mobile menu destination" .github/browser-qa.mjs
-          grep -q "medallion badge matches image count" .github/source-complete-qa.mjs
-          grep -q "betrieb" .github/visual-extra-qa.mjs
-          grep -q "form-fields" .github/visual-extra-qa.mjs
-          grep -q "footer" .github/visual-extra-qa.mjs
+          ! grep -R -qE 'https://www\.larasser-metallbau\.de/wp-content/uploads/' index.html parity.css parity.js referenzen uber-uns kontakt impressum datenschutzerklarung
 
-      - name: Serve static site
-        run: |
-          python3 -m http.server 8080 >/tmp/metallbau-la-http.log 2>&1 &
-          SERVER_PID=$!
-          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
-          sleep 2
-          curl --fail --silent --show-error http://127.0.0.1:8080/ > /tmp/index-rendered.html
-          curl --fail --silent --show-error http://127.0.0.1:8080/visual-fixes.css > /tmp/visual-fixes.css
-          curl --fail --silent --show-error http://127.0.0.1:8080/source-complete.css > /tmp/source-complete.css
-          curl --fail --silent --show-error http://127.0.0.1:8080/source-complete.js > /tmp/source-complete.js
-          curl --fail --silent --show-error http://127.0.0.1:8080/data/balkone.json > /tmp/balkone.json
-          curl --fail --silent --show-error http://127.0.0.1:8080/data/stahlbau.json > /tmp/stahlbau.json
-          curl --fail --silent --show-error http://127.0.0.1:8080/data/interior.json > /tmp/interior.json
-          curl --fail --silent --show-error http://127.0.0.1:8080/data/medallions.json > /tmp/medallions.json
-          grep -q '<title>Metallbau Larasser | Metallbau &amp; Metallgestaltung in Grafing</title>\|<title>Metallbau Larasser | Metallbau & Metallgestaltung in Grafing</title>' /tmp/index-rendered.html
-          grep -q 'mobile menu destination' .github/browser-qa.mjs
-          grep -q '.special-work' /tmp/visual-fixes.css
-          grep -q 'reference-category-bar' /tmp/source-complete.css
-          grep -q 'Category-first reference UX' /tmp/source-complete.js
-          grep -q 'Balkon mit Solarkraftwerk' /tmp/balkone.json
-          grep -q 'Carport für drei Fahrzeuge' /tmp/stahlbau.json
-          grep -q 'Schachtisch' /tmp/interior.json
-          grep -q 'assets/source/' /tmp/medallions.json
-
-      - name: Basic markup checks
+      - name: Static content and local asset integrity
         run: |
           python3 - <<'PY'
           from html.parser import HTMLParser
           from pathlib import Path
+          import json, re
 
-          html = Path('index.html').read_text(encoding='utf-8')
-          required_ids = ['main', 'leistungen', 'referenzen', 'lohnfertigung', 'betrieb', 'anfrage', 'project-form']
-          for element_id in required_ids:
-              assert f'id="{element_id}"' in html, f'Missing id: {element_id}'
+          pages = [
+              Path('index.html'),
+              Path('referenzen/index.html'),
+              Path('referenzen/treppen-and-gelander/index.html'),
+              Path('referenzen/tore-and-zaune/index.html'),
+              Path('referenzen/balkone-and-terrassen/index.html'),
+              Path('referenzen/carports-dacher-and-stahlbau/index.html'),
+              Path('referenzen/interior/index.html'),
+              Path('referenzen/medallions/index.html'),
+              Path('referenzen/lohnbiegen-and-lohnschneiden/index.html'),
+              Path('uber-uns/index.html'),
+              Path('kontakt/index.html'),
+              Path('impressum/index.html'),
+              Path('datenschutzerklarung/index.html'),
+          ]
 
           class Parser(HTMLParser):
               def error(self, message):
                   raise AssertionError(message)
 
-          Parser().feed(html)
-          assert html.count('<h1') == 1, 'Expected exactly one H1'
-          assert 'mailto:info@larasser-metallbau.de' in html, 'Missing central mail contact'
-          assert 'name="robots" content="noindex,nofollow"' in html, 'Demo indexing safeguard missing'
-          print('Basic markup checks passed')
+          for page in pages:
+              html = page.read_text(encoding='utf-8')
+              Parser().feed(html)
+              assert 'name="robots" content="noindex,nofollow"' in html, f'noindex missing: {page}'
+              assert html.count('<h1') == 1, f'expected one H1: {page}'
+              assert 'parity.css' in html, f'parity css missing: {page}'
+              for src in re.findall(r'<img[^>]+src="([^"]+)"', html):
+                  if src.startswith(('http://','https://','data:')) or not src:
+                      continue
+                  target = (page.parent / src).resolve()
+                  assert target.exists(), f'missing image {src} referenced by {page}'
+
+          for data_file in ['treppen','tore','balkone','stahlbau','interior','medallions']:
+              payload = json.loads(Path(f'data/{data_file}.json').read_text(encoding='utf-8'))
+              images = payload.get('images', [])
+              for project in payload.get('projects', []):
+                  images.extend(project.get('images', []))
+              for image in images:
+                  assert Path(image).exists(), f'missing data asset: {image}'
+
+          assert len(json.loads(Path('data/treppen.json').read_text())['projects']) == 9
+          assert len(json.loads(Path('data/tore.json').read_text())['projects']) == 6
+          assert len(json.loads(Path('data/balkone.json').read_text())['projects']) == 7
+          assert len(json.loads(Path('data/stahlbau.json').read_text())['projects']) == 5
+          assert len(json.loads(Path('data/interior.json').read_text())['projects']) == 9
+          assert len(json.loads(Path('data/medallions.json').read_text())['images']) == 44
+
+          sitemap = Path('sitemap.xml').read_text(encoding='utf-8')
+          for route in [
+              '/referenzen/', '/referenzen/interior/', '/referenzen/balkone-and-terrassen/',
+              '/referenzen/tore-and-zaune/', '/referenzen/treppen-and-gelander/',
+              '/referenzen/carports-dacher-and-stahlbau/', '/referenzen/medallions/',
+              '/referenzen/lohnbiegen-and-lohnschneiden/', '/uber-uns/', '/kontakt/',
+              '/impressum/', '/datenschutzerklarung/'
+          ]:
+              assert f'https://www.larasser-metallbau.de{route}' in sitemap, f'sitemap route missing: {route}'
+
+          print('Static parity and local asset checks passed')
           PY
+
+      - name: Serve static site smoke checks
+        run: |
+          python3 -m http.server 8080 >/tmp/metallbau-la-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+          for i in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:8080/ >/dev/null; then break; fi
+            sleep 1
+          done
+          for path in \
+            / \
+            /referenzen/ \
+            /referenzen/interior/ \
+            /referenzen/balkone-and-terrassen/ \
+            /referenzen/tore-and-zaune/ \
+            /referenzen/treppen-and-gelander/ \
+            /referenzen/carports-dacher-and-stahlbau/ \
+            /referenzen/medallions/ \
+            /referenzen/lohnbiegen-and-lohnschneiden/ \
+            /uber-uns/ \
+            /kontakt/ \
+            /impressum/ \
+            /datenschutzerklarung/ \
+            /assets/larasser-logo-mark.svg \
+            /data/treppen.json; do
+              curl --fail --silent --show-error "http://127.0.0.1:8080${path}" >/dev/null
+          done
 
   responsive-browser-qa:
     runs-on: ubuntu-latest
@@ -145,28 +180,20 @@ jobs:
         run: |
           nohup python3 -m http.server 8080 >/tmp/metallbau-la-browser-qa-http.log 2>&1 &
           for i in {1..20}; do
-            if curl --fail --silent http://127.0.0.1:8080/ >/dev/null; then
-              exit 0
-            fi
+            if curl --fail --silent http://127.0.0.1:8080/ >/dev/null; then exit 0; fi
             sleep 1
           done
           cat /tmp/metallbau-la-browser-qa-http.log
           exit 1
 
-      - name: Desktop Android and iPhone browser QA
-        run: node .github/browser-qa.mjs
+      - name: Desktop Android and iPhone parity QA
+        run: node .github/parity-browser-qa.mjs
 
-      - name: Betrieb form and footer visual QA
-        run: node .github/visual-extra-qa.mjs
-
-      - name: Source-complete category and image QA
-        run: node .github/source-complete-qa.mjs
-
-      - name: Upload responsive screenshots
+      - name: Upload parity screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: responsive-browser-screenshots
-          path: artifacts/browser-qa
+          name: parity-browser-screenshots
+          path: artifacts/parity-browser-qa
           if-no-files-found: warn
           retention-days: 14
