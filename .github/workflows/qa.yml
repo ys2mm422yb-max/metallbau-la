@@ -51,17 +51,15 @@ jobs:
           grep -q "visual-fixes.css" script.js
           grep -q "Schachtisch" script.js
           grep -q "medallionsDescription" script.js
-          grep -q "specialarbeiten" script.js
           grep -q "data/treppen.json" script.js
           grep -q "data/medallions.json" script.js
-          grep -q "Interior project coverage incomplete" .github/browser-qa.mjs
-          grep -q "Medallions filter" .github/browser-qa.mjs
+          grep -q "references-awaiting-selection" source-complete.js
+          grep -q "references-awaiting-selection" source-complete.css
+          grep -q "mobile menu destination" .github/browser-qa.mjs
+          grep -q "medallion badge matches image count" .github/source-complete-qa.mjs
           grep -q "betrieb" .github/visual-extra-qa.mjs
           grep -q "form-fields" .github/visual-extra-qa.mjs
           grep -q "footer" .github/visual-extra-qa.mjs
-          grep -q "balkone: 7" .github/source-complete-qa.mjs
-          grep -q "stahlbau: 5" .github/source-complete-qa.mjs
-          grep -q "expected 37 source-complete reference groups" .github/source-complete-qa.mjs
 
       - name: Serve static site
         run: |
@@ -77,10 +75,10 @@ jobs:
           curl --fail --silent --show-error http://127.0.0.1:8080/data/interior.json > /tmp/interior.json
           curl --fail --silent --show-error http://127.0.0.1:8080/data/medallions.json > /tmp/medallions.json
           grep -q '<title>Metallbau Larasser – Demo</title>' /tmp/index-rendered.html
-          grep -q 'open-menu header' .github/browser-qa.mjs
+          grep -q 'mobile menu destination' .github/browser-qa.mjs
           grep -q '.special-work' /tmp/visual-fixes.css
-          grep -q 'source-reference-card' /tmp/source-complete.css
-          grep -q '37 reference entries' /tmp/source-complete.js
+          grep -q 'reference-category-bar' /tmp/source-complete.css
+          grep -q 'Category-first reference UX' /tmp/source-complete.js
           grep -q 'Balkon mit Solarkraftwerk' /tmp/balkone.json
           grep -q 'Carport für drei Fahrzeuge' /tmp/stahlbau.json
           grep -q 'Schachtisch' /tmp/interior.json
