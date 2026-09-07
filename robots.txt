@@ -1,0 +1,6 @@
+# PRE-LAUNCH: keep the public development/demo copy out of search results.
+# Change to "Allow: /" only when larasser-metallbau.de is switched to the final site.
+User-agent: *
+Disallow: /
+
+Sitemap: https://www.larasser-metallbau.de/sitemap.xml

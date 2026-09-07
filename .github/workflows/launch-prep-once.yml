@@ -1,0 +1,56 @@
+name: One-time launch preparation
+
+on:
+  push:
+    branches:
+      - prep/launch-ready-v6
+    paths:
+      - .github/workflows/launch-prep-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Prepare launch-safe markup and form
+        run: node scripts/prepare-launch.mjs
+
+      - name: Localize public Larasser project images
+        run: node scripts/localize-assets.mjs
+
+      - name: Verify no remote runtime project images remain
+        shell: bash
+        run: |
+          if grep -R -nE 'https://www\.larasser-metallbau\.de/wp-content/uploads/' \
+            index.html styles.css source-complete.css visual-fixes.css script.js source-complete.js app-v4.js refs-*.js data/*.json; then
+            echo 'Remote runtime image references remain.' >&2
+            exit 1
+          fi
+          test -f assets/source/manifest.json
+          test "$(find assets/source -type f | wc -l)" -ge 181
+
+      - name: Commit prepared launch assets to branch
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'No launch-prep changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Prepare launch assets and localize project images'
+          git push origin HEAD:prep/launch-ready-v6

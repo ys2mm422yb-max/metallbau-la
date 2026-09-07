@@ -107,7 +107,7 @@ button { color: inherit; }
 .hero-media {
   position: absolute;
   inset: 0;
-  background-image: url("https://www.larasser-metallbau.de/wp-content/uploads/go-x/u/fbe47fab-70a1-4489-8354-63c0f1272c4d/l0%2Ct570%2Cw1110%2Ch1068/image-768x739.jpg");
+  background-image: url("assets/source/87ed42a26eb69c029d02.jpg");
   background-size: cover;
   background-position: center 45%;
   filter: saturate(.72) contrast(1.03) brightness(.84);
