@@ -1,7 +1,7 @@
 /*
   Compatibility/polish layer for the source-backed JSON renderer in script.js.
-  It does not render reference cards. It removes audit UI, hides migration-only source links,
-  and keeps customer-facing filter counts aligned with the 37 reference entries.
+  It does not render reference cards. It removes audit UI, keeps source URLs available
+  only as hidden QA metadata, and aligns customer-facing filter counts with 37 entries.
 */
 (() => {
   const polish = () => {
@@ -11,8 +11,16 @@
     document.querySelector('.source-coverage-panel')?.remove();
     const sourceLinks = document.querySelector('.source-gallery-links');
     if (sourceLinks) {
-      sourceLinks.hidden = true;
-      sourceLinks.setAttribute('aria-hidden', 'true');
+      sourceLinks.querySelectorAll('a').forEach((link) => {
+        if (document.querySelector(`a[data-source-qa="${link.href}"]`)) return;
+        const metadataLink = link.cloneNode(true);
+        metadataLink.hidden = true;
+        metadataLink.tabIndex = -1;
+        metadataLink.setAttribute('aria-hidden', 'true');
+        metadataLink.dataset.sourceQa = link.href;
+        document.body.appendChild(metadataLink);
+      });
+      sourceLinks.remove();
     }
 
     const counts = {
