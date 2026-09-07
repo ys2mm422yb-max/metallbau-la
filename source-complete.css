@@ -1,20 +1,15 @@
-.reference-context {
+/* Category-first reference UX. The full source catalog stays in the DOM/data,
+   but customers only see the category they deliberately select. */
+.reference-context,
+.source-coverage-panel,
+.source-gallery-links,
+.archive-panel,
+#specialarbeiten {
   display: none !important;
 }
 
 #referenzen .section-intro {
   display: none !important;
-}
-
-/* The filter badges already communicate coverage; avoid a competing 36-project
-   counter when Medallions is represented as the 37th reference group. */
-.reference-count {
-  display: none !important;
-}
-
-.source-reference-card {
-  content-visibility: auto;
-  contain-intrinsic-size: 520px;
 }
 
 /* Keep every project lead inside its clipping frame in all pointer states. */
@@ -31,68 +26,206 @@
   transform: none !important;
 }
 
+.source-reference-card {
+  content-visibility: auto;
+  contain-intrinsic-size: 520px;
+}
+
 .source-reference-card .reference-copy p {
   margin-top: 10px;
 }
 
-.source-medallion-card {
-  grid-column: 1 / -1;
+.reference-picker-note {
+  max-width: 700px;
+  margin: 26px 0 0;
+  color: rgba(255,255,255,.58);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.reference-picker-note.has-selection {
+  color: rgba(255,255,255,.42);
+}
+
+#referenzen .reference-category-bar {
   display: grid;
-  grid-template-columns: minmax(260px,.75fr) minmax(280px,1fr);
-  align-items: stretch;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 22px;
+  overflow: visible;
+  padding: 0;
 }
 
-.source-medallion-card > .reference-image {
-  height: 100%;
-  min-height: 420px;
+#referenzen .reference-category-bar .filter-chip {
+  width: 100%;
+  min-width: 0;
+  min-height: 50px;
+  justify-content: space-between;
+  text-align: left;
+  padding: 0 15px;
 }
 
-.source-medallion-card .reference-copy {
-  align-self: start;
+#referenzen .reference-category-bar .filter-chip small {
+  flex: 0 0 auto;
+  min-width: 24px;
+  height: 24px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(255,255,255,.09);
+  color: inherit;
+  font-size: 10px;
 }
 
-.medallion-gallery {
+#referenzen .reference-category-bar .filter-chip.is-active small {
+  background: rgba(20,16,8,.14);
+}
+
+.reference-result-head {
+  width: min(calc(100% - 48px), var(--max));
+  margin: 34px auto 18px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255,255,255,.13);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.reference-result-head[hidden] {
+  display: none !important;
+}
+
+.reference-result-head > div {
+  display: grid;
+  gap: 3px;
+  text-align: right;
+}
+
+.reference-result-head strong {
+  color: #fff;
+  font-size: 18px;
+}
+
+.reference-result-head span {
+  color: rgba(255,255,255,.48);
+  font-size: 12px;
+}
+
+.reference-back {
+  min-height: 40px;
+  padding: 0 13px;
+  border: 1px solid rgba(255,255,255,.22);
+  background: transparent;
+  color: rgba(255,255,255,.82);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.references-awaiting-selection #reference-grid .source-project-card,
+.references-awaiting-selection #reference-grid .medallions-inline {
+  display: none !important;
+}
+
+.references-awaiting-selection #reference-grid {
+  min-height: 0;
+}
+
+/* Medallions are no longer a permanent standalone homepage section. */
+#reference-grid .medallions-inline {
   grid-column: 1 / -1;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: #fff;
+}
+
+#reference-grid .medallions-inline[hidden] {
+  display: none !important;
+}
+
+#reference-grid .medallions-inline .medallions-copy {
+  display: grid;
+  grid-template-columns: 1.05fr .95fr;
+  gap: 16px 56px;
+  padding: 28px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: #15181b;
+}
+
+#reference-grid .medallions-inline .medallions-copy .section-label {
+  grid-column: 1 / -1;
+  margin: 0 0 2px;
+  color: #dfb35b;
+}
+
+#reference-grid .medallions-inline .medallions-copy h2 {
+  grid-row: 2 / span 3;
+  margin: 0;
+  color: #fff;
+  font-size: clamp(34px, 4vw, 52px);
+  line-height: 1;
+  letter-spacing: -.04em;
+}
+
+#reference-grid .medallions-inline .medallions-copy > p {
+  margin: 0;
+  color: rgba(255,255,255,.62);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+#reference-grid .medallions-inline .medallion-finish-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 2px;
+}
+
+#reference-grid .medallions-inline .medallion-finish-list span {
+  padding: 7px 9px;
+  border: 1px solid rgba(255,255,255,.15);
+  background: rgba(255,255,255,.04);
+  color: rgba(255,255,255,.72);
+  font-size: 11px;
+}
+
+#reference-grid .medallions-inline .medallion-gallery {
   display: grid;
   grid-template-columns: repeat(6, minmax(0,1fr));
   gap: 8px;
-  padding: 0 20px 22px;
+  margin-top: 14px;
 }
 
-.medallion-thumb {
+#reference-grid .medallions-inline .medallion-item {
   aspect-ratio: 1;
   padding: 0;
-  border: 1px solid rgba(255,255,255,.08);
-  background: #111315;
+  border: 1px solid rgba(255,255,255,.09);
+  background: #171a1d;
   overflow: hidden;
   cursor: zoom-in;
 }
 
-.medallion-thumb img {
+#reference-grid .medallions-inline .medallion-item img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform .25s ease, filter .25s ease;
 }
 
-.medallion-thumb:hover img,
-.medallion-thumb:focus-visible img {
-  transform: scale(1.035);
-  filter: brightness(1.06);
+#reference-grid .medallions-inline .medallion-extra {
+  display: none;
 }
 
-.special-project img {
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  object-fit: cover;
-  margin-bottom: 16px;
+#reference-grid .medallions-inline .medallion-gallery[data-expanded="true"] .medallion-extra {
+  display: block;
 }
 
-/* The source-verified descriptions are already present in the main reference cards.
-   This secondary Interior gallery stays deliberately image/title-led. */
-#specialarbeiten .special-project p,
-.source-category-links {
-  display: none !important;
+#reference-grid .medallions-inline .medallion-toggle {
+  margin-top: 14px;
+  border: 1px solid rgba(255,255,255,.24);
+  background: transparent;
+  color: #fff;
 }
 
 .company-data {
@@ -122,25 +255,58 @@
   text-underline-offset: 3px;
 }
 
-@media (max-width: 980px) {
-  .source-medallion-card {
+@media (max-width: 820px) {
+  #referenzen .reference-category-bar {
+    grid-template-columns: repeat(2, minmax(0,1fr));
+  }
+
+  #reference-grid .medallions-inline .medallions-copy {
     grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 22px;
   }
 
-  .source-medallion-card > .reference-image {
-    min-height: 330px;
-    height: 360px;
+  #reference-grid .medallions-inline .medallions-copy .section-label,
+  #reference-grid .medallions-inline .medallions-copy h2 {
+    grid-column: auto;
+    grid-row: auto;
   }
 
-  .medallion-gallery {
+  #reference-grid .medallions-inline .medallion-gallery {
     grid-template-columns: repeat(4, minmax(0,1fr));
   }
 }
 
 @media (max-width: 680px) {
-  /* On phones the complete catalog remains accessible, but it no longer makes
-     the page tens of thousands of pixels tall. Categories can be swiped and
-     filters/search still expose every matching project. */
+  .reference-picker-note {
+    margin-top: 20px;
+    font-size: 13px;
+  }
+
+  #referenzen .reference-category-bar {
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  #referenzen .reference-category-bar .filter-chip {
+    min-height: 48px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+
+  .reference-result-head {
+    width: min(calc(100% - 32px), var(--max));
+    margin: 26px auto 14px;
+  }
+
+  .reference-result-head strong {
+    font-size: 15px;
+  }
+
+  .reference-result-head span {
+    font-size: 11px;
+  }
+
   #reference-grid.reference-grid {
     display: flex !important;
     gap: 12px !important;
@@ -152,13 +318,12 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  #reference-grid.reference-grid::-webkit-scrollbar,
-  #specialarbeiten .special-project-grid::-webkit-scrollbar {
+  #reference-grid.reference-grid::-webkit-scrollbar {
     display: none;
   }
 
   #reference-grid .source-project-card {
-    flex: 0 0 min(82vw, 330px);
+    flex: 0 0 min(84vw, 330px);
     scroll-snap-align: start;
     content-visibility: visible;
     contain-intrinsic-size: auto;
@@ -168,54 +333,51 @@
     height: 220px !important;
   }
 
-  .source-reference-card .reference-copy {
+  #reference-grid .source-reference-card .reference-copy {
     padding: 15px 15px 18px;
   }
 
-  .source-reference-card .reference-copy h3 {
+  #reference-grid .source-reference-card .reference-copy h3 {
     font-size: 20px;
   }
 
-  .source-reference-card .reference-copy p {
+  #reference-grid .source-reference-card .reference-copy p {
     font-size: 13px;
     line-height: 1.48;
   }
 
-  /* Interior is already represented in the main reference catalog. Keep the
-     dedicated visual section useful without duplicating nine tall phone cards. */
-  #specialarbeiten .special-project-grid {
-    display: flex !important;
-    gap: 12px !important;
-    overflow-x: auto !important;
-    overflow-y: hidden;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
-    overscroll-behavior-inline: contain;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  #specialarbeiten .special-project {
-    flex: 0 0 min(82vw, 330px);
+  #reference-grid .medallions-inline {
+    flex: 0 0 100%;
+    min-width: 100%;
     scroll-snap-align: start;
   }
 
-  #specialarbeiten .special-project-image {
-    height: 220px !important;
+  #reference-grid .medallions-inline .medallions-copy {
+    padding: 18px 16px;
   }
 
-  .source-medallion-card > .reference-image {
-    height: 300px;
-    min-height: 0;
+  #reference-grid .medallions-inline .medallions-copy h2 {
+    font-size: 30px;
   }
 
-  .medallion-gallery {
+  #reference-grid .medallions-inline .medallions-copy > p {
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  #reference-grid .medallions-inline .medallion-gallery {
     grid-template-columns: repeat(3, minmax(0,1fr));
-    padding: 0 16px 18px;
     gap: 6px;
+    margin-top: 10px;
   }
 
-  .special-project img {
-    aspect-ratio: 16 / 10;
-    margin-bottom: 12px;
+  #reference-grid .medallions-inline .medallion-toggle {
+    width: 100%;
+  }
+}
+
+@media (max-width: 390px) {
+  #reference-grid .medallions-inline .medallion-gallery {
+    grid-template-columns: repeat(2, minmax(0,1fr));
   }
 }
