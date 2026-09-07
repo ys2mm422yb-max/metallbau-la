@@ -24,9 +24,8 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-async function ensureImageLoaded(locator, profile, label, imageSelector = '.reference-image img') {
-  await locator.scrollIntoViewIfNeeded();
-  const image = locator.locator(imageSelector).first();
+async function ensureImageLoaded(image, profile, label) {
+  await image.scrollIntoViewIfNeeded();
   await image.waitFor({ state: 'visible' });
   await image.evaluate(async (img) => {
     if (!img.complete) {
@@ -40,10 +39,9 @@ async function ensureImageLoaded(locator, profile, label, imageSelector = '.refe
   });
   const health = await image.evaluate((img) => ({ complete: img.complete, width: img.naturalWidth, height: img.naturalHeight, src: img.currentSrc || img.src }));
   assert(health.complete && health.width > 0 && health.height > 0, `${profile}: ${label} has a broken image: ${health.src}`);
-  return health;
 }
 
-async function assertCardImageContained(card, profile, label) {
+async function assertLeadContained(card, profile, label) {
   const state = await card.evaluate((element) => {
     const frame = element.querySelector('.reference-image');
     const image = frame?.querySelector('img');
@@ -56,7 +54,36 @@ async function assertCardImageContained(card, profile, label) {
   const [fl, ft, fr, fb] = state.frame;
   const [il, it, ir, ib] = state.image;
   const tolerance = 1.5;
-  assert(il >= fl - tolerance && ir <= fr + tolerance && it >= ft - tolerance && ib <= fb + tolerance, `${profile}: ${label} image escapes its frame`);
+  assert(il >= fl - tolerance && ir <= fr + tolerance && it >= ft - tolerance && ib <= fb + tolerance, `${profile}: ${label} lead image escapes its frame`);
+}
+
+async function verifyAllSourceImageUrls(page, profile) {
+  const urls = await page.evaluate(async () => {
+    const files = ['data/treppen.json', 'data/tore.json', 'data/balkone.json', 'data/stahlbau.json', 'data/interior.json', 'data/medallions.json'];
+    const payloads = await Promise.all(files.map(async (file) => (await fetch(file, { cache: 'no-store' })).json()));
+    return [...new Set(payloads.flatMap((payload) => payload.category === 'medallions'
+      ? payload.images || []
+      : (payload.projects || []).flatMap((project) => project.images || [])))];
+  });
+
+  const broken = await page.evaluate(async (imageUrls) => {
+    const failures = [];
+    const load = (src) => new Promise((resolve) => {
+      const img = new Image();
+      const timer = setTimeout(() => resolve({ src, ok: false, reason: 'timeout' }), 9000);
+      img.onload = () => { clearTimeout(timer); resolve({ src, ok: img.naturalWidth > 0, reason: 'load' }); };
+      img.onerror = () => { clearTimeout(timer); resolve({ src, ok: false, reason: 'error' }); };
+      img.src = src;
+    });
+    for (let i = 0; i < imageUrls.length; i += 10) {
+      const results = await Promise.all(imageUrls.slice(i, i + 10).map(load));
+      failures.push(...results.filter((result) => !result.ok));
+    }
+    return failures;
+  }, urls);
+
+  assert(broken.length === 0, `${profile}: ${broken.length} source gallery images failed to load: ${JSON.stringify(broken.slice(0, 5))}`);
+  console.log(`${profile}: verified ${urls.length} source gallery image URLs`);
 }
 
 for (const profile of profiles) {
@@ -67,58 +94,86 @@ for (const profile of profiles) {
   page.on('pageerror', (error) => errors.push(error.message));
 
   await page.goto(baseURL, { waitUntil: 'networkidle' });
-  await page.waitForFunction(() => document.querySelectorAll('#reference-grid .source-reference-card').length >= 37);
+  await page.waitForFunction(() => document.querySelectorAll('#reference-grid .source-project-card').length === 36 && document.querySelectorAll('#specialarbeiten .medallion-item').length >= 40);
 
-  const allCount = await page.locator('#reference-grid .source-reference-card').count();
-  assert(allCount === 37, `${profile.name}: expected 37 source-complete reference cards, got ${allCount}`);
+  const projectCount = await page.locator('#reference-grid .source-project-card').count();
+  const medallionGroupCount = await page.locator('#specialarbeiten .medallions-section').count();
+  assert(projectCount + medallionGroupCount === 37, `${profile.name}: expected 37 source-complete reference groups, got ${projectCount + medallionGroupCount}`);
 
   for (const [category, count] of Object.entries(expected)) {
     const chip = page.locator(`[data-filter="${category}"]`).first();
     assert(await chip.count() === 1, `${profile.name}: missing ${category} filter`);
-    await chip.click();
-    await page.waitForTimeout(120);
+    const badge = await chip.locator('small').textContent();
+    assert(Number(badge) === count, `${profile.name}: ${category} filter badge expected ${count}, got ${badge}`);
+  }
+  const allBadge = await page.locator('[data-filter="all"] small').textContent();
+  assert(Number(allBadge) === 37, `${profile.name}: all filter badge expected 37, got ${allBadge}`);
 
-    const visible = page.locator(`#reference-grid .source-reference-card[data-category="${category}"]:visible`);
+  for (const category of ['treppen', 'tore', 'balkone', 'stahlbau', 'interior']) {
+    const count = expected[category];
+    await page.locator(`[data-filter="${category}"]`).first().click();
+    await page.waitForTimeout(140);
+    const visible = page.locator(`#reference-grid .source-project-card[data-category="${category}"]:visible`);
     const visibleCount = await visible.count();
-    assert(visibleCount === count, `${profile.name}: ${category} filter expected ${count} photo projects, got ${visibleCount}`);
+    assert(visibleCount === count, `${profile.name}: ${category} filter expected ${count} projects, got ${visibleCount}`);
 
     for (let index = 0; index < visibleCount; index += 1) {
       const card = visible.nth(index);
       const title = (await card.locator('h3').textContent())?.trim() || `${category} ${index + 1}`;
-      await ensureImageLoaded(card, profile.name, title);
-      await assertCardImageContained(card, profile.name, title);
-    }
-
-    if (category === 'medallions') {
-      const thumbs = page.locator('.source-medallion-card .medallion-thumb');
-      const thumbCount = await thumbs.count();
-      assert(thumbCount === 12, `${profile.name}: expected 12 medallion thumbnails, got ${thumbCount}`);
-      for (let index = 0; index < thumbCount; index += 1) {
-        await ensureImageLoaded(thumbs.nth(index), profile.name, `medallion thumbnail ${index + 1}`, 'img');
+      await ensureImageLoaded(card.locator('.reference-image img'), profile.name, `${title} lead`);
+      await assertLeadContained(card, profile.name, title);
+      const thumbs = card.locator('.project-thumbs img');
+      for (let thumb = 0; thumb < await thumbs.count(); thumb += 1) {
+        await ensureImageLoaded(thumbs.nth(thumb), profile.name, `${title} thumbnail ${thumb + 1}`);
       }
     }
 
-    if (category === 'balkone' || category === 'stahlbau' || category === 'medallions') {
+    if (category === 'balkone' || category === 'stahlbau') {
       await visible.first().scrollIntoViewIfNeeded();
       await page.waitForTimeout(180);
       await page.screenshot({ path: `${outDir}/${profile.name}-${category}.png`, fullPage: false });
     }
   }
 
+  await page.locator('[data-filter="medallions"]').first().click();
+  await page.waitForTimeout(180);
+  const medallions = page.locator('#specialarbeiten .medallion-item');
+  const medallionCount = await medallions.count();
+  assert(medallionCount >= 40, `${profile.name}: medallion gallery unexpectedly incomplete (${medallionCount})`);
+  for (let index = 0; index < Math.min(12, medallionCount); index += 1) {
+    await ensureImageLoaded(medallions.nth(index).locator('img'), profile.name, `medallion ${index + 1}`);
+  }
+
+  if (profile.name === 'desktop-chromium') {
+    const toggle = page.locator('.medallion-toggle');
+    await toggle.click();
+    assert(await toggle.getAttribute('aria-expanded') === 'true', `${profile.name}: medallion gallery did not expand`);
+    for (let index = 12; index < medallionCount; index += 1) {
+      await ensureImageLoaded(medallions.nth(index).locator('img'), profile.name, `medallion ${index + 1}`);
+    }
+    await verifyAllSourceImageUrls(page, profile.name);
+  }
+
+  await medallions.first().scrollIntoViewIfNeeded();
+  await page.waitForTimeout(180);
+  await page.screenshot({ path: `${outDir}/${profile.name}-medallions.png`, fullPage: false });
+
   await page.locator('[data-filter="all"]').first().click();
-  const weirdVisibleCopy = await page.evaluate(() => {
-    const text = ['referenzen', 'specialarbeiten']
-      .map((id) => document.getElementById(id)?.innerText || '')
-      .join('\n');
-    return [
-      'Mehr echte Projekte. Weniger Werbetext.',
-      'Diese Demo macht daraus',
-      'auf der bestehenden Website',
-      'auf der bestehenden Seite',
-      'bestehende Larasser-Seite',
-    ].filter((needle) => text.includes(needle));
-  });
-  assert(weirdVisibleCopy.length === 0, `${profile.name}: internal migration wording is still visible: ${weirdVisibleCopy.join(', ')}`);
+  const visibleCopy = await page.locator('body').innerText();
+  const forbidden = [
+    'Mehr echte Projekte. Weniger Werbetext.',
+    'Diese Demo macht daraus',
+    'auf der bestehenden Website',
+    'auf der bestehenden Seite',
+    'bestehende Larasser-Seite',
+    'auf dem bestehenden Webauftritt',
+    'öffentlicher Projektbestand',
+    'vollständig nach Bereichen erfasst',
+  ];
+  const leaks = forbidden.filter((needle) => visibleCopy.toLowerCase().includes(needle.toLowerCase()));
+  assert(leaks.length === 0, `${profile.name}: internal migration/audit wording is visible: ${leaks.join(', ')}`);
+  assert(await page.locator('.source-coverage-panel').count() === 0, `${profile.name}: internal source coverage panel is visible`);
+  assert(await page.locator('.source-gallery-links').count() === 0, `${profile.name}: migration source links are visible`);
 
   const horizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   assert(horizontalOverflow <= 1, `${profile.name}: source-complete UI has horizontal overflow (${horizontalOverflow}px)`);
@@ -127,4 +182,4 @@ for (const profile of profiles) {
   await browser.close();
 }
 
-console.log('Source-complete QA passed on desktop, Android and iPhone/WebKit: all 37 lead images and all 12 medallion thumbnails loaded and stayed in-frame.');
+console.log('Source-complete QA passed on desktop, Android and iPhone/WebKit with 37 reference groups and source-gallery image health checks.');
