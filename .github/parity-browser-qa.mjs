@@ -16,10 +16,7 @@ const assert = (condition, message) => {
 };
 
 async function checkNoHorizontalOverflow(page, label) {
-  const dims = await page.evaluate(() => ({
-    sw: document.documentElement.scrollWidth,
-    cw: document.documentElement.clientWidth,
-  }));
+  const dims = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
   assert(dims.sw <= dims.cw + 1, `${label}: horizontal overflow ${dims.sw} > ${dims.cw}`);
 }
 
@@ -34,9 +31,7 @@ for (const scenario of scenarios) {
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', (error) => errors.push(`pageerror: ${error.message}`));
-  page.on('console', (message) => {
-    if (message.type() === 'error') errors.push(`console: ${message.text()}`);
-  });
+  page.on('console', (message) => { if (message.type() === 'error') errors.push(`console: ${message.text()}`); });
 
   await checkStatus(page, '/');
   await page.locator('h1').waitFor({ state: 'visible' });
@@ -112,19 +107,20 @@ for (const scenario of scenarios) {
   assert(machineText.includes('Baykal HGL 3108'), `${scenario.name}: HGL machine missing`);
   assert(machineText.includes('3.100 mm'), `${scenario.name}: machine dimensions missing`);
   assert(await page.locator('[data-part-inquiry]').isVisible(), `${scenario.name}: Bauteilanfrage missing`);
-  assert(await page.locator('.part-shape-card').count() === 4, `${scenario.name}: expected four part shape choices`);
+  assert(await page.locator('.part-shape-card').count() === 4, `${scenario.name}: expected four inquiry choices`);
   assert(await page.locator('[data-part-inquiry] #files').count() === 1, `${scenario.name}: Bauteilanfrage file upload missing`);
   await page.locator('input[name="quantity"]').fill('3');
   await page.locator('select[name="material"]').selectOption({ label: 'Stahl' });
   await page.locator('input[name="thickness"]').fill('2');
   await page.locator('input[name="length"]').fill('800');
   await page.locator('input[name="width"]').fill('300');
-  await page.locator('input[name="holes"]').fill('4');
-  await page.locator('input[name="hole-diameter"]').fill('8');
+  await page.locator('input[name="angle"]').fill('90');
+  await page.locator('input[name="bends"]').fill('2');
   const configSummary = await page.locator('[data-config-summary]').innerText();
   assert(configSummary.includes('Stückzahl: 3'), `${scenario.name}: quantity summary missing`);
   assert(configSummary.includes('Material: Stahl'), `${scenario.name}: material summary missing`);
-  assert(configSummary.includes('Bohrungen: 4'), `${scenario.name}: drilling summary missing`);
+  assert(configSummary.includes('Biegewinkel: 90°'), `${scenario.name}: angle summary missing`);
+  assert(configSummary.includes('Anzahl Biegungen: 2'), `${scenario.name}: bends summary missing`);
   await checkNoHorizontalOverflow(page, `${scenario.name} Bauteilanfrage`);
   await page.screenshot({ path: `${out}/${scenario.name}-bauteilanfrage.png`, fullPage: true });
 
