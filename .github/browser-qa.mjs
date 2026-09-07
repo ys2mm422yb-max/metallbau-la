@@ -54,7 +54,7 @@ async function settleImages(page) {
         img.addEventListener('error', resolve, { once: true });
         setTimeout(resolve, 5000);
       });
-      try { await img.decode(); } catch { /* handled by explicit checks below */ }
+      try { await img.decode(); } catch { /* explicit health checks below */ }
     }));
   });
 }
@@ -117,7 +117,6 @@ for (const profile of profiles) {
   assert(await page.locator('.site-header').isVisible(), `${profile.name}: header is not visible`);
 
   if (profile.mobile) {
-    /* Reproduce the real-world bug: open the menu after the page has been scrolled. */
     await page.locator('#leistungen').scrollIntoViewIfNeeded();
     await page.waitForTimeout(150);
     const scrollBeforeMenu = await page.evaluate(() => window.scrollY);
@@ -142,6 +141,7 @@ for (const profile of profiles) {
         nav: nr ? { top: nr.top, left: nr.left, right: nr.right, bottom: nr.bottom, width: nr.width, height: nr.height } : null,
         bodyPosition: getComputedStyle(document.body).position,
         actionsVisibility: mobileActions ? getComputedStyle(mobileActions).visibility : 'missing',
+        interiorLink: !!nav?.querySelector('a[href="#specialarbeiten"]'),
       };
     });
 
@@ -152,6 +152,7 @@ for (const profile of profiles) {
     assert(navState.nav && navState.nav.bottom >= navState.viewportHeight - 2, `${profile.name}: menu does not reach viewport bottom`);
     assert(navState.bodyPosition === 'fixed', `${profile.name}: background page is not hard-locked while menu is open`);
     assert(navState.actionsVisibility === 'hidden', `${profile.name}: sticky CTA remains visible over open menu`);
+    assert(navState.interiorLink, `${profile.name}: Interior link missing from mobile menu`);
 
     await viewportShot(page, profile.name, 'menu-open');
     await page.keyboard.press('Escape');
@@ -165,7 +166,7 @@ for (const profile of profiles) {
     assert(!(await page.locator('.mobile-actions').isVisible()), `${profile.name}: mobile actions visible on desktop`);
   }
 
-  for (const id of ['leistungen', 'referenzen', 'lohnfertigung', 'betrieb', 'anfrage']) {
+  for (const id of ['leistungen', 'referenzen', 'specialarbeiten', 'lohnfertigung', 'betrieb', 'anfrage']) {
     const section = page.locator(`#${id}`);
     assert(await section.count() === 1, `${profile.name}: missing #${id}`);
     const box = await section.boundingBox();
@@ -174,15 +175,21 @@ for (const profile of profiles) {
 
   const referenceCount = await page.locator('.reference-card').count();
   const archiveCount = await page.locator('.archive-list [data-category]').count();
+  const interiorProjectCount = await page.locator('#specialarbeiten .special-project').count();
   assert(referenceCount >= 10, `${profile.name}: too few detailed reference cards (${referenceCount})`);
-  assert(archiveCount >= 15, `${profile.name}: verified reference archive lost source projects (${archiveCount})`);
+  assert(archiveCount >= 25, `${profile.name}: verified reference archive lost source projects (${archiveCount})`);
+  assert(interiorProjectCount >= 9, `${profile.name}: Interior project coverage incomplete (${interiorProjectCount})`);
+  assert(await page.locator('[data-filter="interior"]').count() === 1, `${profile.name}: Interior filter missing`);
+  assert(await page.locator('[data-filter="medallions"]').count() === 1, `${profile.name}: Medallions filter missing`);
+  assert(await page.locator('a[href="https://www.larasser-metallbau.de/referenzen/interior/"]').count() >= 1, `${profile.name}: Interior source gallery link missing`);
+  assert(await page.locator('a[href="https://www.larasser-metallbau.de/referenzen/medallions/"]').count() >= 1, `${profile.name}: Medallions source gallery link missing`);
 
-  await viewportShot(page, profile.name, 'references', '#referenzen .filter-bar');
+  await viewportShot(page, profile.name, 'references', '#referenzen .reference-tools');
   await settleImages(page);
   await assertContainedImages(page, profile.name, '.reference-image', 'img');
 
   await page.locator('[data-filter="tore"]').click();
-  await page.waitForTimeout(80);
+  await page.waitForTimeout(100);
   const filterState = await page.evaluate(() => ({
     visibleCards: [...document.querySelectorAll('.reference-card')].filter((el) => !el.classList.contains('is-hidden')).length,
     wrongVisible: [...document.querySelectorAll('.reference-card')].filter((el) => !el.classList.contains('is-hidden') && el.dataset.category !== 'tore').length,
@@ -190,7 +197,36 @@ for (const profile of profiles) {
   }));
   assert(filterState.visibleCards >= 4, `${profile.name}: Tore filter shows too few detailed cards`);
   assert(filterState.wrongVisible === 0 && filterState.wrongArchive === 0, `${profile.name}: Tore filter leaks other categories`);
+
+  await page.locator('[data-filter="interior"]').click();
+  await page.waitForTimeout(100);
+  const visibleInteriorArchive = page.locator('.archive-list [data-category="interior"]:visible');
+  assert(await visibleInteriorArchive.count() >= 9, `${profile.name}: Interior filter does not expose the verified Interior archive`);
+
+  await page.locator('[data-filter="medallions"]').click();
+  await page.waitForTimeout(100);
+  assert(await page.locator('.archive-list [data-category="medallions"]:visible').count() >= 1, `${profile.name}: Medallions filter has no visible result`);
+
   await page.locator('[data-filter="all"]').click();
+  const search = page.locator('.reference-search input');
+  await search.fill('Schachtisch');
+  await page.waitForTimeout(100);
+  assert(await page.locator('.archive-list [data-category="interior"]:visible').filter({ hasText: 'Schachtisch' }).count() === 1, `${profile.name}: reference search cannot find Schachtisch`);
+  await search.fill('');
+  await page.locator('[data-filter="all"]').click();
+
+  const archiveToggle = page.locator('.archive-toggle');
+  assert(await archiveToggle.isVisible(), `${profile.name}: archive expand control missing`);
+  await archiveToggle.click();
+  assert(await archiveToggle.getAttribute('aria-expanded') === 'true', `${profile.name}: archive expand control failed`);
+
+  await viewportShot(page, profile.name, 'interior-medallions', '#specialarbeiten .special-layout');
+  const specialOverflow = await page.evaluate(() => {
+    const section = document.querySelector('#specialarbeiten');
+    const r = section?.getBoundingClientRect();
+    return r ? { left: r.left, right: r.right, viewport: window.innerWidth } : null;
+  });
+  assert(specialOverflow && specialOverflow.left >= -1 && specialOverflow.right <= specialOverflow.viewport + 1, `${profile.name}: special work section overflows viewport`);
 
   const firstLightboxButton = page.locator('[data-lightbox-src]').first();
   await firstLightboxButton.scrollIntoViewIfNeeded();
@@ -231,6 +267,7 @@ for (const profile of profiles) {
   const textSpacing = await page.evaluate(() => {
     const pairs = [
       ['#referenzen .section-label', '#referenzen h2'],
+      ['#specialarbeiten .section-label', '#specialarbeiten h2'],
       ['#betrieb .section-label', '#betrieb h2'],
       ['#anfrage .section-label', '#anfrage h2'],
     ];
