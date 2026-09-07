@@ -1,10 +1,10 @@
-# Host-compatible redirect plan for common static hosts such as Netlify.
-# Keep legal pages separate until their final approved local versions exist.
-/referenzen/treppen-and-gelander/ /#referenzen 301
-/referenzen/tore-and-zaune/ /#referenzen 301
-/referenzen/balkone-and-terrassen/ /#referenzen 301
-/referenzen/carports-daecher-stahlbau/ /#referenzen 301
-/referenzen/interior/ /#referenzen 301
-/referenzen/medallions/ /#referenzen 301
-/lohnfertigung/ /#lohnfertigung 301
-/kontakt/ /#anfrage 301
+# Redirect plan for static production hosts that support Netlify-style _redirects.
+# The current public Larasser routes are now real files and should not be redirected to homepage anchors.
+
+# Known legacy/current aliases
+/treppen-1/ /referenzen/treppen-and-gelander/ 301
+/referenzen/carports-daecher-stahlbau/ /referenzen/carports-dacher-and-stahlbau/ 301
+/lohnfertigung/ /referenzen/lohnbiegen-and-lohnschneiden/ 301
+
+# Keep www/non-www/domain canonicalization in the final hosting platform rather than here,
+# because the production host is not selected yet.

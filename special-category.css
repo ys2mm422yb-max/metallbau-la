@@ -1,0 +1,11 @@
+.special-category-page .page-hero h1,
+.special-category-page .project-heading h2 {
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+@media (max-width: 720px) {
+  .special-category-page .page-hero h1 {
+    font-size: clamp(36px, 9.5vw, 48px);
+  }
+}
