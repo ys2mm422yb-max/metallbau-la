@@ -43,6 +43,33 @@
     });
   }
 
+  function alignTargetBelowHeader(target) {
+    const root = document.documentElement;
+    const previousScrollBehavior = root.style.scrollBehavior;
+    root.style.scrollBehavior = 'auto';
+
+    const align = () => {
+      const headerBottom = document.querySelector('.site-header')?.getBoundingClientRect().bottom || 0;
+      const targetTop = target.getBoundingClientRect().top;
+      const delta = targetTop - headerBottom - 14;
+      if (Math.abs(delta) > 1) {
+        window.scrollBy({ top: delta, left: 0, behavior: 'auto' });
+      }
+    };
+
+    // Correct against the real post-unlock geometry rather than relying on a
+    // precomputed absolute position. A second frame catches mobile viewport/header
+    // layout settling without introducing a smooth-scroll race.
+    align();
+    requestAnimationFrame(() => {
+      align();
+      requestAnimationFrame(() => {
+        align();
+        root.style.scrollBehavior = previousScrollBehavior;
+      });
+    });
+  }
+
   function closeMenuAndNavigate(anchor, target) {
     const body = document.body;
     const menuOpen = body.classList.contains('nav-open');
@@ -50,12 +77,8 @@
       ? Math.max(0, -(Number.parseFloat(body.style.top || '0') || 0))
       : window.scrollY;
 
-    // Measure the target only after the body is unlocked. Mobile browsers can
-    // report misleading target geometry while the whole document is position:fixed.
     unlockMenuAt(lockedY, () => {
-      const headerHeight = document.querySelector('.site-header')?.getBoundingClientRect().height || 0;
-      const top = Math.max(0, window.scrollY + target.getBoundingClientRect().top - headerHeight - 14);
-      window.scrollTo({ top, behavior: 'smooth' });
+      alignTargetBelowHeader(target);
       history.replaceState?.(null, '', anchor.getAttribute('href'));
     });
   }
@@ -149,9 +172,7 @@
 
     if (scroll) {
       requestAnimationFrame(() => {
-        const headerHeight = document.querySelector('.site-header')?.getBoundingClientRect().height || 0;
-        const top = window.scrollY + grid.getBoundingClientRect().top - headerHeight - 12;
-        window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+        alignTargetBelowHeader(grid);
       });
     }
   }
