@@ -230,15 +230,20 @@ body {
      animation after closing the fixed-body mobile menu. */
   html { scroll-behavior: auto; }
 
+  /* Mobile header must be fully opaque. Otherwise text/images travelling
+     underneath the fixed header bleed through and look like overlaps. */
+  .site-header {
+    background: #25282a;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    transition: height .22s ease, background .22s ease;
+  }
+
   /*
    * Real iOS Safari is stricter than desktop WebKit when a fixed child sits
    * inside another fixed element. Turn the header itself into the full-screen
    * layer and hard-lock the page scroll in JavaScript while the menu is open.
    */
-  .site-header {
-    transition: height .22s ease, background .22s ease;
-  }
-
   .site-nav {
     position: absolute;
     inset: var(--header) 0 0;
