@@ -44,6 +44,10 @@ for (const scenario of scenarios) {
   assert(homeHeading.includes('metallbau') && homeHeading.includes('larasser'), `${scenario.name}: homepage H1 missing`);
   assert(await page.locator('.brand-mark').first().isVisible(), `${scenario.name}: official mark not visible`);
   assert(await page.locator('a[href="referenzen/treppen-and-gelander/"]').count() > 0, `${scenario.name}: Treppen route missing`);
+  assert(await page.locator('a[href="referenzen/sonderanfertigungen/"]').count() > 0, `${scenario.name}: Sonderanfertigungen route missing`);
+  const facts = await page.locator('.fact-grid').innerText();
+  assert(facts.includes('1996') && facts.includes('EXC2'), `${scenario.name}: source-safe homepage facts missing`);
+  assert(!facts.includes('29') && !facts.includes('Mitarbeiter'), `${scenario.name}: disputed counters must not be prominent`);
   await checkNoHorizontalOverflow(page, `${scenario.name} homepage`);
   await page.screenshot({ path: `${out}/${scenario.name}-home.png`, fullPage: true });
 
@@ -58,6 +62,14 @@ for (const scenario of scenarios) {
     await page.locator('.nav-toggle').click();
   }
 
+  await checkStatus(page, '/referenzen/');
+  assert(await page.locator('.reference-category-card').count() === 8, `${scenario.name}: expected 8 reference categories`);
+  const hubText = await page.locator('main').innerText();
+  assert(hubText.includes('Sonderanfertigungen'), `${scenario.name}: Sonderanfertigungen missing from hub`);
+  assert(hubText.includes('Lohnfertigung'), `${scenario.name}: Lohnfertigung missing from hub`);
+  await checkNoHorizontalOverflow(page, `${scenario.name} reference hub`);
+  await page.screenshot({ path: `${out}/${scenario.name}-reference-hub.png`, fullPage: true });
+
   await checkStatus(page, '/referenzen/treppen-and-gelander/');
   await page.locator('.project').first().waitFor({ state: 'visible' });
   assert(await page.locator('.project').count() === 9, `${scenario.name}: expected 9 Treppen projects`);
@@ -71,14 +83,24 @@ for (const scenario of scenarios) {
   assert(await page.locator('#lightbox').evaluate((el) => el.open), `${scenario.name}: lightbox did not open`);
   await page.locator('.lightbox-close').click();
 
+  await checkStatus(page, '/referenzen/sonderanfertigungen/');
+  assert(await page.locator('.project').count() === 6, `${scenario.name}: expected 6 curated Sonderanfertigungen`);
+  assert((await page.locator('main').innerText()).includes('Schachtisch'), `${scenario.name}: Schachtisch missing from Sonderanfertigungen`);
+  assert(await page.locator('[data-static-gallery] img').count() >= 20, `${scenario.name}: Sonderanfertigungen gallery incomplete`);
+  await checkNoHorizontalOverflow(page, `${scenario.name} Sonderanfertigungen`);
+  await page.locator('[data-static-gallery] button').first().click();
+  assert(await page.locator('#lightbox').evaluate((el) => el.open), `${scenario.name}: Sonderanfertigungen lightbox did not open`);
+  await page.locator('.lightbox-close').click();
+
   await checkStatus(page, '/referenzen/medallions/');
   await page.locator('[data-medallion]').first().waitFor({ state: 'visible' });
   assert(await page.locator('[data-medallion]').count() === 44, `${scenario.name}: expected 44 medallions`);
   await checkNoHorizontalOverflow(page, `${scenario.name} Medallions`);
 
-  await checkStatus(page, '/kontakt/');
+  await checkStatus(page, '/kontakt/?projekt=Sonderanfertigungen');
   assert(await page.locator('#project-form').isVisible(), `${scenario.name}: project form missing`);
   assert(await page.locator('#files').count() === 1, `${scenario.name}: file upload missing`);
+  assert(await page.locator('#project-type').inputValue() === 'Sonderanfertigungen', `${scenario.name}: project prefill failed`);
   assert((await page.locator('main').innerText()).includes('Stephan Larasser'), `${scenario.name}: Stephan contact missing`);
   assert((await page.locator('main').innerText()).includes('Martin Larasser'), `${scenario.name}: Martin contact missing`);
   await checkNoHorizontalOverflow(page, `${scenario.name} contact`);
@@ -89,8 +111,24 @@ for (const scenario of scenarios) {
   assert(machineText.includes('Baykal APHS 31160'), `${scenario.name}: APHS machine missing`);
   assert(machineText.includes('Baykal HGL 3108'), `${scenario.name}: HGL machine missing`);
   assert(machineText.includes('3.100 mm'), `${scenario.name}: machine dimensions missing`);
+  assert(await page.locator('[data-part-inquiry]').isVisible(), `${scenario.name}: Bauteilanfrage missing`);
+  assert(await page.locator('.part-shape-card').count() === 4, `${scenario.name}: expected four part shape choices`);
+  assert(await page.locator('[data-part-inquiry] #files').count() === 1, `${scenario.name}: Bauteilanfrage file upload missing`);
+  await page.locator('input[name="quantity"]').fill('3');
+  await page.locator('select[name="material"]').selectOption({ label: 'Stahl' });
+  await page.locator('input[name="thickness"]').fill('2');
+  await page.locator('input[name="length"]').fill('800');
+  await page.locator('input[name="width"]').fill('300');
+  await page.locator('input[name="holes"]').fill('4');
+  await page.locator('input[name="hole-diameter"]').fill('8');
+  const configSummary = await page.locator('[data-config-summary]').innerText();
+  assert(configSummary.includes('Stückzahl: 3'), `${scenario.name}: quantity summary missing`);
+  assert(configSummary.includes('Material: Stahl'), `${scenario.name}: material summary missing`);
+  assert(configSummary.includes('Bohrungen: 4'), `${scenario.name}: drilling summary missing`);
+  await checkNoHorizontalOverflow(page, `${scenario.name} Bauteilanfrage`);
+  await page.screenshot({ path: `${out}/${scenario.name}-bauteilanfrage.png`, fullPage: true });
 
-  for (const legalPath of ['/impressum/', '/datenschutzerklarung/', '/uber-uns/', '/referenzen/']) {
+  for (const legalPath of ['/impressum/', '/datenschutzerklarung/', '/uber-uns/']) {
     await checkStatus(page, legalPath);
     await checkNoHorizontalOverflow(page, `${scenario.name} ${legalPath}`);
   }
