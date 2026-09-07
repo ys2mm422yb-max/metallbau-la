@@ -5,6 +5,7 @@
   const note = document.querySelector('#form-note');
   const submit = form.querySelector('button[type="submit"]');
   const files = form.querySelector('#files');
+  const consent = form.querySelector('#consent');
   const config = window.LARASSER_CONFIG || {};
   const endpoint = String(form.dataset.formEndpoint || config.formEndpoint || '').trim();
 
@@ -13,6 +14,10 @@
   const MAX_FILE_BYTES = 10 * 1024 * 1024;
   const MAX_TOTAL_BYTES = 25 * 1024 * 1024;
   const allowedExtensions = /\.(?:jpe?g|png|webp|heic|heif|pdf)$/i;
+
+  // Include the required consent field in FormData even though the original demo markup
+  // did not have a name attribute yet.
+  if (consent && !consent.name) consent.name = 'consent';
 
   function setNote(message, state = '') {
     if (!note) return;
@@ -75,7 +80,10 @@
     let endpointUrl;
     try {
       endpointUrl = new URL(endpoint, window.location.href);
-      if (!['https:', 'http:'].includes(endpointUrl.protocol)) throw new Error('unsupported protocol');
+      const localDev = ['localhost', '127.0.0.1', '::1'].includes(endpointUrl.hostname);
+      if (endpointUrl.protocol !== 'https:' && !(localDev && endpointUrl.protocol === 'http:')) {
+        throw new Error('Form endpoint must use HTTPS');
+      }
     } catch {
       event.preventDefault();
       event.stopImmediatePropagation();
