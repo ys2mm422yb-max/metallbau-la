@@ -102,6 +102,21 @@ The navigation confirms separate public sections for:
 
 Their pages could not be reliably extracted by the web parser during this audit. The demo must not invent project names, specifications or descriptions for them. Until their contents can be verified directly, the demo preserves discoverability by linking to the existing official sections.
 
+## Current demo parity status
+
+Verified on the current redesign branch:
+- mobile navigation is a full-screen layer with background scroll locking/restoration for iOS/Android
+- mobile header is opaque so scrolling content cannot visually bleed through it
+- mobile typography has relaxed headline sizing, line-height and letter-spacing to avoid cramped/overlapping text
+- reference and machine images are clipped to explicit frames/aspect ratios instead of protruding outside cards
+- all verified Treppen/Tore/Balkone/Stahlbau project groups above are represented either as detailed cards or in the filterable archive
+- several Treppen/Tore projects now have multi-image lightbox galleries using images from the public Larasser site
+- Lohnbiegen/Lohnschneiden contains both Baykal machines, images and the verified specifications above
+- contact section includes central phone, opening hours and the two verified mobile numbers; footer retains the verified fax
+- public Impressum and Datenschutz remain directly reachable
+- Interior and Medallions remain explicitly linked to the official public sections rather than being fabricated
+- demo remains `noindex,nofollow` and has no server-side form storage
+
 ## Visual / technical parity requirements
 
 A change is not considered ready just because static checks pass. Before merge, QA must cover:
