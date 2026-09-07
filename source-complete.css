@@ -68,6 +68,14 @@
   margin-bottom: 16px;
 }
 
+/* The detailed, source-verified texts are already shown in the main reference cards.
+   The older dynamically generated Interior snippets contained internal migration wording,
+   so this secondary visual gallery intentionally stays image/title-led. */
+#specialarbeiten .special-project p,
+.source-category-links {
+  display: none !important;
+}
+
 .company-data {
   margin-top: 30px;
   padding-top: 24px;
