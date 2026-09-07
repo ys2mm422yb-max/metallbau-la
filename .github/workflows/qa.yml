@@ -20,6 +20,10 @@ jobs:
         run: |
           node --check script.js
           node --check source-complete.js
+          node --check launch-config.js
+          node --check launch-ready.js
+          node --check scripts/prepare-launch.mjs
+          node --check scripts/localize-assets.mjs
           node --check .github/browser-qa.mjs
           node --check .github/source-complete-qa.mjs
           node --check .github/visual-extra-qa.mjs
@@ -32,6 +36,13 @@ jobs:
           test -f source-complete.css
           test -f script.js
           test -f source-complete.js
+          test -f launch-config.js
+          test -f launch-ready.js
+          test -f robots.txt
+          test -f sitemap.xml
+          test -f 404.html
+          test -f LAUNCH_CHECKLIST.md
+          test -f assets/source/manifest.json
           test -f SOURCE_AUDIT.md
           test -f data/treppen.json
           test -f data/tore.json
@@ -43,11 +54,17 @@ jobs:
           test -f .github/source-complete-qa.mjs
           test -f .github/visual-extra-qa.mjs
           grep -q 'noindex,nofollow' index.html
+          grep -q 'Disallow: /' robots.txt
           grep -q 'Unverbindliche Design-Demo' index.html
           grep -q 'EN 1090-2 EXC2' index.html
           grep -q 'info@larasser-metallbau.de' index.html
           grep -q 'source-complete.js' index.html
           grep -q 'source-complete.css' index.html
+          grep -q 'launch-ready.js' index.html
+          grep -q "formEndpoint: ''" launch-config.js
+          ! grep -R -qE 'https://www\.larasser-metallbau\.de/wp-content/uploads/' index.html styles.css source-complete.css visual-fixes.css script.js source-complete.js app-v4.js refs-*.js data/*.json
+          test "$(find assets/source -maxdepth 1 -type f ! -name manifest.json | wc -l)" -eq 190
+          node -e "const m=require('./assets/source/manifest.json'); if(m.count!==190) process.exit(1)"
           grep -q "visual-fixes.css" script.js
           grep -q "Schachtisch" script.js
           grep -q "medallionsDescription" script.js
@@ -65,6 +82,7 @@ jobs:
         run: |
           python3 -m http.server 8080 >/tmp/metallbau-la-http.log 2>&1 &
           SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
           sleep 2
           curl --fail --silent --show-error http://127.0.0.1:8080/ > /tmp/index-rendered.html
           curl --fail --silent --show-error http://127.0.0.1:8080/visual-fixes.css > /tmp/visual-fixes.css
@@ -74,7 +92,7 @@ jobs:
           curl --fail --silent --show-error http://127.0.0.1:8080/data/stahlbau.json > /tmp/stahlbau.json
           curl --fail --silent --show-error http://127.0.0.1:8080/data/interior.json > /tmp/interior.json
           curl --fail --silent --show-error http://127.0.0.1:8080/data/medallions.json > /tmp/medallions.json
-          grep -q '<title>Metallbau Larasser – Demo</title>' /tmp/index-rendered.html
+          grep -q '<title>Metallbau Larasser | Metallbau &amp; Metallgestaltung in Grafing</title>\|<title>Metallbau Larasser | Metallbau & Metallgestaltung in Grafing</title>' /tmp/index-rendered.html
           grep -q 'mobile menu destination' .github/browser-qa.mjs
           grep -q '.special-work' /tmp/visual-fixes.css
           grep -q 'reference-category-bar' /tmp/source-complete.css
@@ -82,8 +100,7 @@ jobs:
           grep -q 'Balkon mit Solarkraftwerk' /tmp/balkone.json
           grep -q 'Carport für drei Fahrzeuge' /tmp/stahlbau.json
           grep -q 'Schachtisch' /tmp/interior.json
-          grep -q 'fed3ff42-a233-4579-80c0-6bf92e2939e3' /tmp/medallions.json
-          kill $SERVER_PID
+          grep -q 'assets/source/' /tmp/medallions.json
 
       - name: Basic markup checks
         run: |
@@ -103,6 +120,7 @@ jobs:
           Parser().feed(html)
           assert html.count('<h1') == 1, 'Expected exactly one H1'
           assert 'mailto:info@larasser-metallbau.de' in html, 'Missing central mail contact'
+          assert 'name="robots" content="noindex,nofollow"' in html, 'Demo indexing safeguard missing'
           print('Basic markup checks passed')
           PY
 
