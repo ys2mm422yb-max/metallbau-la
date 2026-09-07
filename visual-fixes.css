@@ -5,7 +5,7 @@ body {
   max-width: 100%;
 }
 
-/* Keep large editorial type readable instead of cramped. */
+/* Keep editorial type readable instead of cramped. */
 .hero h1,
 .section-head h2,
 .fabrication-intro h2,
@@ -15,6 +15,14 @@ body {
 .machine-card-copy h3 {
   text-wrap: balance;
   overflow-wrap: break-word;
+}
+
+.hero h1,
+.section-head h2,
+.fabrication-intro h2,
+.about-title h2,
+.inquiry-copy h2 {
+  letter-spacing: -.035em;
 }
 
 /* Every project/machine image must stay inside its own frame. */
@@ -29,25 +37,26 @@ body {
 .reference-card,
 .machine-card {
   overflow: hidden;
+  contain: paint;
 }
 
 .reference-image {
   position: relative;
   aspect-ratio: 4 / 3;
-  height: auto;
+  height: auto !important;
   overflow: hidden;
   isolation: isolate;
 }
 
 .reference-card-wide .reference-image {
   aspect-ratio: 16 / 9;
-  height: auto;
+  height: auto !important;
 }
 
 .reference-image img,
 .machine-card > img {
   display: block;
-  width: 100%;
+  width: 100% !important;
   max-width: 100%;
   object-fit: cover;
   object-position: center;
@@ -56,12 +65,12 @@ body {
 .reference-image img {
   position: absolute;
   inset: 0;
-  height: 100%;
+  height: 100% !important;
 }
 
 .machine-card > img {
-  aspect-ratio: 4 / 3;
-  height: auto;
+  aspect-ratio: 16 / 10;
+  height: auto !important;
 }
 
 /* Fixed-header anchor protection. */
@@ -75,12 +84,151 @@ body {
   scroll-margin-top: calc(var(--header) + 18px);
 }
 
+/* Extra verified content added from the public Larasser pages. */
+.service-card-source {
+  background: linear-gradient(135deg, rgba(216,166,64,.08), rgba(255,255,255,.18));
+}
+
+.service-card-source .service-arrow {
+  font-size: 17px;
+}
+
+.source-category-links {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px 34px;
+  align-items: center;
+  margin-top: 30px;
+  padding: 24px 0 0;
+  border-top: 1px solid rgba(255,255,255,.14);
+  color: rgba(255,255,255,.66);
+}
+
+.source-category-links > span {
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.source-category-links > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.source-category-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid rgba(255,255,255,.24);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 720;
+}
+
+.team-phone {
+  display: inline-flex;
+  margin-top: 12px;
+  color: var(--accent-2);
+  font-size: 13px;
+  font-weight: 760;
+}
+
+.legal-links {
+  display: inline-flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.legal-links a {
+  color: rgba(255,255,255,.55);
+}
+
+.direct-contact-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.direct-contact-row a {
+  display: grid;
+  gap: 2px;
+  padding: 13px 14px;
+  border: 1px solid rgba(16,18,20,.15);
+  background: rgba(255,255,255,.35);
+}
+
+.direct-contact-row span {
+  color: #84898d;
+  font-size: 9px;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+
+.direct-contact-row strong {
+  font-size: 13px;
+}
+
+/* Richer project lightbox with gallery controls. */
+.lightbox {
+  overflow: hidden;
+}
+
+.lightbox-meta {
+  position: absolute;
+  left: 16px;
+  right: 72px;
+  bottom: 14px;
+  z-index: 3;
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 10px 12px;
+  color: rgba(255,255,255,.9);
+  background: rgba(0,0,0,.62);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  pointer-events: none;
+}
+
+.lightbox-meta strong {
+  min-width: 0;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lightbox-meta span {
+  flex: 0 0 auto;
+  color: rgba(255,255,255,.62);
+  font-size: 11px;
+}
+
+.lightbox-nav {
+  position: absolute;
+  top: 50%;
+  z-index: 3;
+  width: 48px;
+  height: 56px;
+  transform: translateY(-50%);
+  border: 1px solid rgba(255,255,255,.28);
+  background: rgba(0,0,0,.55);
+  color: #fff;
+  font-size: 28px;
+  cursor: pointer;
+}
+
+.lightbox-prev { left: 12px; }
+.lightbox-next { right: 12px; }
+.lightbox-nav[hidden] { display: none; }
+
 @media (max-width: 1040px) {
   /*
-   * iOS Safari can treat a fixed child inside another fixed element oddly.
-   * Make the header itself the full-screen layer while the menu is open,
-   * then position the menu inside it. This prevents the partial overlay seen
-   * on real iPhone Safari.
+   * Real iOS Safari is stricter than desktop WebKit when a fixed child sits
+   * inside another fixed element. Turn the header itself into the full-screen
+   * layer and hard-lock the page scroll in JavaScript while the menu is open.
    */
   .site-header {
     transition: height .22s ease, background .22s ease;
@@ -136,38 +284,40 @@ body {
   }
 
   .hero-content {
-    padding-top: calc(var(--header) + 68px);
+    padding-top: calc(var(--header) + 64px);
   }
 
   .hero h1 {
-    font-size: clamp(42px, 12.2vw, 52px);
-    line-height: 1.01;
-    letter-spacing: -.042em;
+    max-width: 100%;
+    font-size: clamp(40px, 10.9vw, 46px);
+    line-height: 1.02;
+    letter-spacing: -.028em;
   }
 
   .hero-lead {
-    line-height: 1.62;
+    max-width: 34rem;
+    line-height: 1.64;
   }
 
   .section-head h2,
   .about-title h2,
   .inquiry-copy h2 {
-    font-size: clamp(34px, 9.7vw, 42px);
-    line-height: 1.04;
-    letter-spacing: -.038em;
+    font-size: clamp(33px, 8.9vw, 39px);
+    line-height: 1.06;
+    letter-spacing: -.025em;
   }
 
   .fabrication-intro h2 {
-    font-size: clamp(36px, 10.6vw, 46px);
-    line-height: 1.04;
-    letter-spacing: -.04em;
+    font-size: clamp(35px, 9.6vw, 42px);
+    line-height: 1.06;
+    letter-spacing: -.026em;
   }
 
   .service-card h3,
   .reference-copy h3,
   .machine-card-copy h3 {
-    line-height: 1.14;
-    letter-spacing: -.025em;
+    line-height: 1.16;
+    letter-spacing: -.018em;
   }
 
   .service-card p,
@@ -175,18 +325,18 @@ body {
   .section-intro,
   .about-copy > p,
   .fabrication-intro > p:not(.section-label) {
-    line-height: 1.62;
+    line-height: 1.65;
   }
 
   .reference-image,
   .reference-card-wide .reference-image {
     aspect-ratio: 4 / 3;
-    height: auto;
+    height: auto !important;
   }
 
   .machine-card > img {
     aspect-ratio: 16 / 10;
-    height: auto;
+    height: auto !important;
   }
 
   .reference-copy,
@@ -201,12 +351,29 @@ body {
     overflow-wrap: anywhere;
   }
 
+  .machine-card-copy {
+    padding: 20px 18px 22px;
+  }
+
+  .machine-card-copy li {
+    padding-block: 11px;
+  }
+
   .filter-bar {
     scroll-snap-type: x proximity;
   }
 
   .filter-chip {
     scroll-snap-align: start;
+  }
+
+  .source-category-links {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .direct-contact-row {
+    grid-template-columns: 1fr;
   }
 
   .project-form {
@@ -229,6 +396,22 @@ body {
   .site-footer {
     padding-bottom: calc(48px + env(safe-area-inset-bottom));
   }
+
+  .lightbox {
+    width: calc(100vw - 16px);
+    height: min(76dvh, 760px);
+  }
+
+  .lightbox-nav {
+    width: 42px;
+    height: 50px;
+  }
+
+  .lightbox-meta {
+    left: 10px;
+    right: 58px;
+    bottom: 10px;
+  }
 }
 
 @media (max-width: 390px) {
@@ -241,21 +424,21 @@ body {
   }
 
   .site-nav a {
-    font-size: 25px;
-    line-height: 1.18;
+    font-size: 24px;
+    line-height: 1.2;
   }
 
   .hero h1 {
-    font-size: clamp(40px, 11.8vw, 46px);
+    font-size: clamp(38px, 10.6vw, 42px);
   }
 
   .section-head h2,
   .about-title h2,
   .inquiry-copy h2 {
-    font-size: 34px;
+    font-size: 32px;
   }
 
   .fabrication-intro h2 {
-    font-size: 37px;
+    font-size: 35px;
   }
 }
