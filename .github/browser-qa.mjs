@@ -42,6 +42,15 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+async function viewportShot(page, profileName, label, selector) {
+  if (selector) {
+    const target = page.locator(selector).first();
+    await target.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(120);
+  }
+  await page.screenshot({ path: `${outDir}/${profileName}-${label}.png`, fullPage: false });
+}
+
 for (const profile of profiles) {
   const browser = await profile.engine.launch({ headless: true });
   const context = await browser.newContext(profile.context);
@@ -55,7 +64,7 @@ for (const profile of profiles) {
   page.on('pageerror', (error) => pageErrors.push(error.message));
 
   await page.goto(baseURL, { waitUntil: 'networkidle' });
-  await page.screenshot({ path: `${outDir}/${profile.name}-top.png`, fullPage: false });
+  await viewportShot(page, profile.name, 'top');
 
   const metrics = await page.evaluate(() => ({
     innerWidth: window.innerWidth,
@@ -96,7 +105,7 @@ for (const profile of profiles) {
     assert(navState.height >= navState.viewportHeight - 2, `${profile.name}: menu height ${navState.height}px < viewport ${navState.viewportHeight}px`);
     assert(navState.bodyOverflow === 'hidden', `${profile.name}: body scroll is not locked while menu is open`);
 
-    await page.screenshot({ path: `${outDir}/${profile.name}-menu-open.png`, fullPage: false });
+    await viewportShot(page, profile.name, 'menu-open');
     await page.keyboard.press('Escape');
     await page.waitForTimeout(120);
     assert(!(await page.evaluate(() => document.body.classList.contains('nav-open'))), `${profile.name}: Escape did not close menu`);
@@ -115,6 +124,7 @@ for (const profile of profiles) {
 
   const referenceCount = await page.locator('.reference-card').count();
   assert(referenceCount >= 10, `${profile.name}: too few reference cards (${referenceCount})`);
+  await viewportShot(page, profile.name, 'references', '#referenzen .filter-bar');
 
   await page.locator('[data-filter="tore"]').click();
   await page.waitForTimeout(80);
@@ -134,6 +144,7 @@ for (const profile of profiles) {
   await page.locator('.lightbox-close').click();
   assert(!(await page.locator('#lightbox').evaluate((el) => el.open)), `${profile.name}: lightbox did not close`);
 
+  await viewportShot(page, profile.name, 'fabrication', '#lohnfertigung .machine-grid');
   const fabricationLink = page.locator('[data-prefill="Lohnbiegen & Lohnschneiden"]').first();
   await fabricationLink.scrollIntoViewIfNeeded();
   await fabricationLink.click();
@@ -144,11 +155,10 @@ for (const profile of profiles) {
   const form = page.locator('#project-form');
   await form.scrollIntoViewIfNeeded();
   assert(await form.isVisible(), `${profile.name}: inquiry form is not visible`);
+  await viewportShot(page, profile.name, 'form', '#project-form');
 
   const bottomMetrics = await page.evaluate(() => ({ innerWidth: window.innerWidth, scrollWidth: document.documentElement.scrollWidth }));
   assert(bottomMetrics.scrollWidth <= bottomMetrics.innerWidth + 1, `${profile.name}: horizontal overflow after interactions`);
-
-  await page.screenshot({ path: `${outDir}/${profile.name}-full.png`, fullPage: true });
   assert(pageErrors.length === 0, `${profile.name}: page errors: ${pageErrors.join(' | ')}`);
   assert(consoleErrors.length === 0, `${profile.name}: console errors: ${consoleErrors.join(' | ')}`);
 
