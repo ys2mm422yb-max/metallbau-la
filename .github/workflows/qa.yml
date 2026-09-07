@@ -32,6 +32,11 @@ jobs:
           grep -q 'EN 1090-2 EXC2' index.html
           grep -q 'info@larasser-metallbau.de' index.html
           grep -q "visual-fixes.css" script.js
+          grep -q "Schachtisch" script.js
+          grep -q "medallionsDescription" script.js
+          grep -q "specialarbeiten" script.js
+          grep -q "Interior project coverage incomplete" .github/browser-qa.mjs
+          grep -q "Medallions filter" .github/browser-qa.mjs
 
       - name: Serve static site
         run: |
@@ -42,6 +47,7 @@ jobs:
           curl --fail --silent --show-error http://127.0.0.1:8080/visual-fixes.css > /tmp/visual-fixes.css
           grep -q '<title>Metallbau Larasser – Demo</title>' /tmp/index-rendered.html
           grep -q 'open-menu header' .github/browser-qa.mjs
+          grep -q '.special-work' /tmp/visual-fixes.css
           kill $SERVER_PID
 
       - name: Basic markup checks
