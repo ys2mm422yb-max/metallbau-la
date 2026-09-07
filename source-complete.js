@@ -15,76 +15,130 @@
 
   const nav = document.querySelector('.site-nav');
   const navToggle = document.querySelector('.nav-toggle');
+  let menuScrollY = null;
+  let navigationRun = 0;
 
-  function unlockMenuAt(restoreY, afterUnlock) {
+  function currentLockedY() {
+    if (Number.isFinite(menuScrollY)) return Math.max(0, menuScrollY);
+    return Math.max(0, -(Number.parseFloat(document.body.style.top || '0') || 0));
+  }
+
+  function setMenuState(open) {
     const body = document.body;
-    const root = document.documentElement;
-    const previousScrollBehavior = root.style.scrollBehavior;
-    const safeY = Number.isFinite(restoreY) ? Math.max(0, restoreY) : null;
+    if (open) {
+      body.classList.add('nav-open');
+      Object.assign(body.style, {
+        position: 'fixed',
+        top: `-${menuScrollY}px`,
+        left: '0',
+        right: '0',
+        width: '100%',
+      });
+      navToggle?.setAttribute('aria-expanded', 'true');
+      navToggle?.setAttribute('aria-label', 'Navigation schließen');
+      return;
+    }
 
-    // CSS enables smooth scrolling globally. A plain scrollTo() would therefore
-    // animate the menu restoration and leave Chromium/WebKit half-way down the
-    // page for a noticeable moment. Force an instant restoration while the fixed
-    // body lock is released, then verify it once layout has settled.
-    root.style.scrollBehavior = 'auto';
     body.classList.remove('nav-open');
     Object.assign(body.style, { position: '', top: '', left: '', right: '', width: '' });
     navToggle?.setAttribute('aria-expanded', 'false');
     navToggle?.setAttribute('aria-label', 'Navigation öffnen');
+  }
 
-    if (safeY != null) window.scrollTo({ top: safeY, left: 0, behavior: 'auto' });
+  function openMenuDeterministically() {
+    const root = document.documentElement;
+    const previousScrollBehavior = root.style.scrollBehavior;
+
+    // Stop any still-running smooth scroll before we capture the menu lock point.
+    // Otherwise a second fast menu interaction can inherit an intermediate scrollY.
+    root.style.scrollBehavior = 'auto';
+    menuScrollY = Math.max(0, window.scrollY);
+    window.scrollTo({ top: menuScrollY, left: 0, behavior: 'auto' });
+    setMenuState(true);
 
     requestAnimationFrame(() => {
-      if (safeY != null) window.scrollTo({ top: safeY, left: 0, behavior: 'auto' });
+      root.style.scrollBehavior = previousScrollBehavior;
+    });
+  }
+
+  function restoreMenuPosition() {
+    const root = document.documentElement;
+    const previousScrollBehavior = root.style.scrollBehavior;
+    const restoreY = currentLockedY();
+    const run = ++navigationRun;
+
+    root.style.scrollBehavior = 'auto';
+    setMenuState(false);
+    window.scrollTo({ top: restoreY, left: 0, behavior: 'auto' });
+
+    requestAnimationFrame(() => {
+      if (run !== navigationRun) return;
+      window.scrollTo({ top: restoreY, left: 0, behavior: 'auto' });
       requestAnimationFrame(() => {
+        if (run !== navigationRun) return;
+        menuScrollY = null;
         root.style.scrollBehavior = previousScrollBehavior;
-        afterUnlock?.();
       });
     });
   }
 
-  function alignTargetBelowHeader(target) {
+  function navigateToTarget(anchor, target) {
     const root = document.documentElement;
     const previousScrollBehavior = root.style.scrollBehavior;
+    const wasOpen = document.body.classList.contains('nav-open');
+    const restoreY = wasOpen ? currentLockedY() : Math.max(0, window.scrollY);
+    const run = ++navigationRun;
+
+    // Keep scrolling instant for the whole navigation transaction. This cancels
+    // a previous CSS smooth-scroll and prevents it from winning the race later.
     root.style.scrollBehavior = 'auto';
+    if (wasOpen) {
+      setMenuState(false);
+      window.scrollTo({ top: restoreY, left: 0, behavior: 'auto' });
+    } else {
+      window.scrollTo({ top: restoreY, left: 0, behavior: 'auto' });
+    }
 
     const align = () => {
-      const headerBottom = document.querySelector('.site-header')?.getBoundingClientRect().bottom || 0;
-      const targetTop = target.getBoundingClientRect().top;
-      const delta = targetTop - headerBottom - 14;
-      if (Math.abs(delta) > 1) {
-        window.scrollBy({ top: delta, left: 0, behavior: 'auto' });
-      }
+      if (run !== navigationRun || !target.isConnected) return;
+      const header = document.querySelector('.site-header');
+      const headerHeight = header?.getBoundingClientRect().height || 0;
+      const absoluteTop = window.scrollY + target.getBoundingClientRect().top;
+      const desiredTop = Math.max(0, absoluteTop - headerHeight - 14);
+      window.scrollTo({ top: desiredTop, left: 0, behavior: 'auto' });
     };
 
-    // Correct against the real post-unlock geometry rather than relying on a
-    // precomputed absolute position. A second frame catches mobile viewport/header
-    // layout settling without introducing a smooth-scroll race.
+    // Re-align after layout has settled. The final delayed pass also covers the
+    // mobile browser chrome/viewport adjustment that can happen just after closing
+    // the full-screen menu on iOS and Android.
     align();
     requestAnimationFrame(() => {
       align();
       requestAnimationFrame(() => {
         align();
-        root.style.scrollBehavior = previousScrollBehavior;
+        setTimeout(() => {
+          if (run !== navigationRun) return;
+          align();
+          menuScrollY = null;
+          root.style.scrollBehavior = previousScrollBehavior;
+        }, 140);
       });
     });
+
+    history.replaceState?.(null, '', anchor.getAttribute('href'));
   }
 
-  function closeMenuAndNavigate(anchor, target) {
-    const body = document.body;
-    const menuOpen = body.classList.contains('nav-open');
-    const lockedY = menuOpen
-      ? Math.max(0, -(Number.parseFloat(body.style.top || '0') || 0))
-      : window.scrollY;
+  // Own the hamburger interaction in capture phase so the older generic handler in
+  // script.js cannot start a competing scroll restoration. This makes repeated,
+  // fast open → navigate → open → navigate interactions deterministic.
+  navToggle?.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    if (document.body.classList.contains('nav-open')) restoreMenuPosition();
+    else openMenuDeterministically();
+  }, true);
 
-    unlockMenuAt(lockedY, () => {
-      alignTargetBelowHeader(target);
-      history.replaceState?.(null, '', anchor.getAttribute('href'));
-    });
-  }
-
-  // Handle menu links before the generic anchor handler in script.js reaches document.
-  // This prevents the old scroll-lock restoration from overriding the chosen destination.
+  // Handle menu links before the generic document-level anchor handler in script.js.
   nav?.addEventListener('click', (event) => {
     const anchor = event.target.closest('a[href^="#"]');
     if (!anchor) return;
@@ -92,19 +146,15 @@
     const target = hash ? document.querySelector(hash) : null;
     if (!target) return;
     event.preventDefault();
-    event.stopPropagation();
-    closeMenuAndNavigate(anchor, target);
-  });
+    event.stopImmediatePropagation();
+    navigateToTarget(anchor, target);
+  }, true);
 
-  // On mobile, Escape must restore the exact scroll position encoded by the fixed
-  // body lock. Using the inline top value avoids stale scroll state after viewport
-  // changes in Chromium/WebKit while the full-screen menu is open.
   window.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape' || !document.body.classList.contains('nav-open')) return;
-    const lockedY = Math.max(0, -(Number.parseFloat(document.body.style.top || '0') || 0));
     event.preventDefault();
     event.stopImmediatePropagation();
-    unlockMenuAt(lockedY);
+    restoreMenuPosition();
   }, true);
 
   // script.js originally binds the Medallion toggle while its gallery lives inside
@@ -190,7 +240,10 @@
 
     if (scroll) {
       requestAnimationFrame(() => {
-        alignTargetBelowHeader(grid);
+        const header = document.querySelector('.site-header');
+        const headerHeight = header?.getBoundingClientRect().height || 0;
+        const absoluteTop = window.scrollY + grid.getBoundingClientRect().top;
+        window.scrollTo({ top: Math.max(0, absoluteTop - headerHeight - 14), left: 0, behavior: 'auto' });
       });
     }
   }
