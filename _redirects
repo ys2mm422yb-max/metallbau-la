@@ -1,0 +1,10 @@
+# Host-compatible redirect plan for common static hosts such as Netlify.
+# Keep legal pages separate until their final approved local versions exist.
+/referenzen/treppen-and-gelander/ /#referenzen 301
+/referenzen/tore-and-zaune/ /#referenzen 301
+/referenzen/balkone-and-terrassen/ /#referenzen 301
+/referenzen/carports-daecher-stahlbau/ /#referenzen 301
+/referenzen/interior/ /#referenzen 301
+/referenzen/medallions/ /#referenzen 301
+/lohnfertigung/ /#lohnfertigung 301
+/kontakt/ /#anfrage 301
