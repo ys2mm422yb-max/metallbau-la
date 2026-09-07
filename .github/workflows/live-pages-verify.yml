@@ -1,0 +1,39 @@
+name: Live Pages Verify
+
+on:
+  push:
+    branches: [fix/visual-ios-qa-v3]
+
+permissions:
+  contents: read
+
+jobs:
+  verify-live:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify deployed main at public Pages URL
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://ys2mm422yb-max.github.io/metallbau-la'
+          for attempt in {1..18}; do
+            if html="$(curl --fail --silent --show-error --location --max-time 20 "$base/")" \
+              && css="$(curl --fail --silent --show-error --location --max-time 20 "$base/source-complete.css")" \
+              && js="$(curl --fail --silent --show-error --location --max-time 20 "$base/script.js")" \
+              && steel="$(curl --fail --silent --show-error --location --max-time 20 "$base/data/stahlbau.json")"; then
+              if grep -Fq '<title>Metallbau Larasser – Demo</title>' <<<"$html" \
+                && grep -Fq 'noindex,nofollow' <<<"$html" \
+                && grep -Fq '#reference-grid.reference-grid' <<<"$css" \
+                && grep -Fq 'scroll-snap-type: x mandatory' <<<"$css" \
+                && grep -Fq "data/medallions.json" <<<"$js" \
+                && ! grep -Fq '__PLACEHOLDER__' <<<"$js" \
+                && grep -Fq 'Carport für drei Fahrzeuge' <<<"$steel"; then
+                echo 'LIVE_OK: public GitHub Pages serves the final main implementation.'
+                exit 0
+              fi
+            fi
+            echo "Live site not at expected final state yet (attempt $attempt/18)."
+            sleep 10
+          done
+          echo 'Public Pages URL did not reach the expected final state.' >&2
+          exit 1
