@@ -4,7 +4,6 @@ visualFixes.href = 'visual-fixes.css';
 document.head.appendChild(visualFixes);
 
 const navToggle = document.querySelector('.nav-toggle');
-const navLinks = document.querySelectorAll('.site-nav a');
 const form = document.querySelector('#project-form');
 const files = document.querySelector('#files');
 const fileStatus = document.querySelector('#file-status');
@@ -18,6 +17,8 @@ let navScrollY = 0;
 let lightboxGallery = [];
 let lightboxIndex = 0;
 let lightboxTitle = '';
+let activeReferenceFilter = 'all';
+let referenceSearch = '';
 
 const verifiedGalleryExtras = {
   'Geschmiedete Gartengeländer': [
@@ -63,23 +64,97 @@ const verifiedGalleryExtras = {
   ],
 };
 
-function addVerifiedSourceCoverage() {
+const interiorProjects = [
+  {
+    year: '2023',
+    title: 'Schachtisch',
+    description: 'Ein Tisch mit verborgenem Schachbrett: Das mittig liegende Holzelement kann entnommen werden, die geschmiedeten Figuren sind passend integriert. Auf der bestehenden Website als mit dem Meisterpreis ausgezeichnet beschrieben.',
+  },
+  {
+    year: '2023',
+    title: 'Feuerschale',
+    description: 'Das Projekt „Feuerschale“ war Thema in der Meisterschule, die Martin Larasser 2022/23 besuchte. Die bestehende Seite beschreibt solche Objekte als eng mit den Kunden geplant und umgesetzt.',
+  },
+  {
+    year: '2021',
+    title: 'Stehleuchte',
+    description: 'Als Gesellenstück von Martin Larasser gefertigt und auf der bestehenden Website als mit dem ersten Preis der „Guten Form“ im Handwerk ausgezeichnet beschrieben.',
+  },
+  {
+    year: '2004',
+    title: 'Sisyphus',
+    description: 'Aus alten Kutschenachsen und einem lokalen Findling geschmiedet. Der Sisyphus steht laut bestehender Seite vor dem Heimatmuseum in Grafing bei München.',
+  },
+  {
+    year: '2002',
+    title: 'Badeinrichtung',
+    description: 'Höhenverstellbarer Spiegel mit Gasdruckdämpfern, eingefasst mit Edelstahl und einer kleinen Holzablage; dazu eine Edelstahl-Unterkonstruktion für das Waschbecken.',
+  },
+  {
+    year: '2020',
+    title: 'Grafinger Bär',
+    description: 'Aus Bronze gefertigter Bär mit eingemeißelten Konturen, gefärbt und gewachst.',
+  },
+  {
+    year: '2020',
+    title: 'Schale – The Space Between Us',
+    description: 'Zwei gebogene Metallflächen – konkav und konvex – berühren sich in einem Punkt. Die Arbeit entstand laut bestehender Seite im Rahmen von Martin Larassers Ausbildung in der Schmiede Peter Michael Reich.',
+  },
+  {
+    year: '',
+    title: 'Gastronomieeinrichtung',
+    description: 'Individuelle Metalllösungen für betriebliche Kunden; auf der bestehenden Seite unter anderem mit maßgefertigten Gläserhaltern für einen Gastronomiebetrieb gezeigt.',
+  },
+  {
+    year: '2018',
+    title: 'Holzlege',
+    description: 'Holzlege und Bodenblech aus verzundertem Stahl – abgestimmt auf Form und Material des Ofens.',
+  },
+];
+
+const medallionsDescription = 'Die Medaillons werden laut bestehender Larasser-Seite aus Bronze gefertigt und mit handgemachten Stempeln unter glühender Hitze geprägt. Sie können vergoldet, gefärbt, verzinnt oder unbehandelt bleiben; auch Kombinationen sind möglich. Motive und Stempel werden auf Wunsch individuell gestaltet.';
+
+function addServiceAndFilterCoverage() {
   const services = document.querySelector('.services');
-  if (services && !services.querySelector('[data-source-service="medallions"]')) {
+  if (services) {
     const lohnService = [...services.querySelectorAll('.service-card')].find((card) => card.getAttribute('href') === '#lohnfertigung');
     if (lohnService) {
       const index = lohnService.querySelector('.service-index');
       if (index) index.textContent = '07';
     }
 
-    const card = document.createElement('a');
-    card.className = 'service-card service-card-source';
-    card.dataset.sourceService = 'medallions';
-    card.href = 'https://www.larasser-metallbau.de/referenzen/medallions/';
-    card.target = '_blank';
-    card.rel = 'noopener';
-    card.innerHTML = '<span class="service-index">06</span><h3>Medallions</h3><p>Eigener Referenzbereich des bestehenden Larasser-Webauftritts.</p><span class="service-arrow">↗</span>';
-    services.insertBefore(card, lohnService || null);
+    const interiorCard = [...services.querySelectorAll('.service-card')].find((card) => card.dataset.filterLink === 'interior');
+    if (interiorCard) {
+      interiorCard.querySelector('h3').textContent = 'Interior & Metallgestaltung';
+      interiorCard.querySelector('p').textContent = 'Möbel, Leuchten, Objekte, Gastronomie- und Wohnraumlösungen – individuell geplant und gefertigt.';
+    }
+
+    if (!services.querySelector('[data-source-service="medallions"]')) {
+      const card = document.createElement('a');
+      card.className = 'service-card service-card-source';
+      card.dataset.sourceService = 'medallions';
+      card.dataset.filterLink = 'medallions';
+      card.href = '#referenzen';
+      card.innerHTML = '<span class="service-index">06</span><h3>Medallions</h3><p>Individuell geprägte Bronze-Medaillons mit handgemachten Stempeln und unterschiedlichen Oberflächen.</p><span class="service-arrow">↗</span>';
+      services.insertBefore(card, lohnService || null);
+    }
+  }
+
+  const filterBar = document.querySelector('.filter-bar');
+  if (filterBar) {
+    const filterDefinitions = [
+      ['interior', 'Interior'],
+      ['medallions', 'Medallions'],
+    ];
+    filterDefinitions.forEach(([value, label]) => {
+      if (filterBar.querySelector(`[data-filter="${value}"]`)) return;
+      const button = document.createElement('button');
+      button.className = 'filter-chip';
+      button.type = 'button';
+      button.dataset.filter = value;
+      button.textContent = label;
+      filterBar.appendChild(button);
+    });
   }
 
   if (projectType && ![...projectType.options].some((option) => option.text === 'Medallions')) {
@@ -89,44 +164,131 @@ function addVerifiedSourceCoverage() {
     const lohnOption = [...projectType.options].find((item) => item.text === 'Lohnbiegen & Lohnschneiden');
     projectType.insertBefore(option, lohnOption || null);
   }
+}
 
+function addArchiveCoverage() {
   const archiveList = document.querySelector('.archive-list');
-  if (archiveList) {
-    const knownTitles = new Set(
-      [...archiveList.querySelectorAll('strong')].map((node) => node.textContent.trim())
-    );
+  if (!archiveList) return;
 
-    const verifiedProjects = [
-      ['treppen', '2015', 'Geschwungene Stahltreppe', 'Treppen & Geländer'],
-      ['treppen', '2016', 'Treppengeländer im Handwerkerhaus', 'Treppen & Geländer'],
-      ['tore', '2019', 'Friedhofstor & Zaunanlage', 'Tore & Zäune'],
-      ['balkone', '2022', 'Terrasse mit Geländer', 'Balkone & Terrassen'],
-      ['balkone', '2016', 'Geschmiedeter Balkon', 'Balkone & Terrassen'],
-    ];
+  const knownTitles = new Set([...archiveList.querySelectorAll('strong')].map((node) => node.textContent.trim()));
+  const verifiedProjects = [
+    ['treppen', '2015', 'Geschwungene Stahltreppe', 'Treppen & Geländer'],
+    ['treppen', '2016', 'Treppengeländer im Handwerkerhaus', 'Treppen & Geländer'],
+    ['tore', '2019', 'Friedhofstor & Zaunanlage', 'Tore & Zäune'],
+    ['balkone', '2022', 'Terrasse mit Geländer', 'Balkone & Terrassen'],
+    ['balkone', '2016', 'Geschmiedeter Balkon', 'Balkone & Terrassen'],
+    ...interiorProjects.map((item) => ['interior', item.year || '—', item.title, 'Interior & Metallgestaltung']),
+    ['medallions', '—', 'Individuelle Bronze-Medaillons', 'Medallions'],
+  ];
 
-    verifiedProjects.forEach(([category, year, title, label]) => {
-      if (knownTitles.has(title)) return;
-      const item = document.createElement('div');
-      item.dataset.category = category;
-      item.innerHTML = `<span>${year}</span><strong>${title}</strong><small>${label}</small>`;
-      archiveList.appendChild(item);
+  verifiedProjects.forEach(([category, year, title, label]) => {
+    if (knownTitles.has(title)) return;
+    const item = document.createElement('div');
+    item.dataset.category = category;
+    item.dataset.search = `${year} ${title} ${label}`.toLowerCase();
+    item.innerHTML = `<span>${year}</span><strong>${title}</strong><small>${label}</small>`;
+    archiveList.appendChild(item);
+  });
+
+  const panel = document.querySelector('.archive-panel');
+  if (panel && !panel.querySelector('.archive-toggle')) {
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'archive-toggle';
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.innerHTML = '<span>Vollständiges Projektarchiv anzeigen</span><strong></strong>';
+    panel.appendChild(toggle);
+    toggle.addEventListener('click', () => {
+      const expanded = panel.classList.toggle('is-expanded');
+      toggle.setAttribute('aria-expanded', String(expanded));
+      toggle.querySelector('span').textContent = expanded ? 'Projektarchiv einklappen' : 'Vollständiges Projektarchiv anzeigen';
     });
   }
+}
 
-  const archivePanel = document.querySelector('.archive-panel');
-  if (archivePanel && !archivePanel.querySelector('.source-category-links')) {
-    const sourceLinks = document.createElement('div');
-    sourceLinks.className = 'source-category-links';
-    sourceLinks.innerHTML = `
-      <span>Die bestehende Website führt zusätzlich eigene Referenzseiten für Interior und Medallions. Bis die vollständigen Inhalte und Bildrechte für die Demo bestätigt sind, bleiben diese Bereiche direkt erreichbar.</span>
+function addSpecialWorkShowcase() {
+  if (document.querySelector('#specialarbeiten')) return;
+  const fabrication = document.querySelector('#lohnfertigung');
+  if (!fabrication) return;
+
+  const section = document.createElement('section');
+  section.id = 'specialarbeiten';
+  section.className = 'special-work section-light';
+
+  const projectMarkup = interiorProjects.map((project) => `
+    <article class="special-project" data-category="interior" data-search="${`${project.year} ${project.title} ${project.description}`.toLowerCase().replace(/"/g, '&quot;')}">
+      <span>${project.year || 'Interior'}</span>
+      <h3>${project.title}</h3>
+      <p>${project.description}</p>
+    </article>
+  `).join('');
+
+  section.innerHTML = `
+    <div class="content-width special-head">
       <div>
-        <a href="https://www.larasser-metallbau.de/referenzen/interior/" target="_blank" rel="noopener">Interior ↗</a>
-        <a href="https://www.larasser-metallbau.de/referenzen/medallions/" target="_blank" rel="noopener">Medallions ↗</a>
+        <p class="section-label">Interior & Metallgestaltung</p>
+        <h2>Mehr als Geländer, Tore und Stahlbau.</h2>
       </div>
-    `;
-    archivePanel.appendChild(sourceLinks);
-  }
+      <p>Die bestehende Larasser-Seite zeigt einen deutlich größeren gestalterischen Bereich. In enger Zusammenarbeit werden individuelle Wünsche entworfen, geplant, gefertigt und montiert – für Wohnraum, Garten und betriebliche Einrichtungen.</p>
+    </div>
 
+    <div class="content-width special-layout">
+      <div class="special-column special-column-main">
+        <div class="special-column-head">
+          <span>Ausgewählte Interior-Arbeiten</span>
+          <a href="https://www.larasser-metallbau.de/referenzen/interior/" target="_blank" rel="noopener">Originalgalerie öffnen ↗</a>
+        </div>
+        <div class="special-project-grid">${projectMarkup}</div>
+      </div>
+
+      <aside class="medallions-panel" data-category="medallions" data-search="medallions bronze stempel vergoldet gefärbt verzinnt individuell">
+        <span class="medallions-kicker">Medallions</span>
+        <h3>Individuell geprägt. Von der Form bis zur Oberfläche.</h3>
+        <p>${medallionsDescription}</p>
+        <div class="medallion-finish-list" aria-label="Oberflächen und Gestaltungsmöglichkeiten">
+          <span>Bronze</span><span>vergoldet</span><span>gefärbt</span><span>verzinnt</span><span>unbehandelt</span><span>individuelle Stempel</span>
+        </div>
+        <a class="button button-dark" href="https://www.larasser-metallbau.de/referenzen/medallions/" target="_blank" rel="noopener">Medaillon-Galerie öffnen ↗</a>
+      </aside>
+    </div>
+  `;
+
+  fabrication.insertAdjacentElement('beforebegin', section);
+
+  const nav = document.querySelector('.site-nav');
+  if (nav && !nav.querySelector('a[href="#specialarbeiten"]')) {
+    const link = document.createElement('a');
+    link.href = '#specialarbeiten';
+    link.textContent = 'Interior';
+    const fabricationLink = nav.querySelector('a[href="#lohnfertigung"]');
+    nav.insertBefore(link, fabricationLink || nav.querySelector('.nav-cta'));
+  }
+}
+
+function addReferenceTools() {
+  const projectsTop = document.querySelector('.projects-top');
+  const filterBar = projectsTop?.querySelector('.filter-bar');
+  if (!projectsTop || !filterBar || projectsTop.querySelector('.reference-tools')) return;
+
+  const tools = document.createElement('div');
+  tools.className = 'reference-tools';
+  tools.innerHTML = `
+    <label class="reference-search">
+      <span class="sr-only">Referenzen durchsuchen</span>
+      <input type="search" inputmode="search" autocomplete="off" placeholder="Projekt suchen …" aria-label="Referenzen durchsuchen" />
+    </label>
+    <span class="reference-count" aria-live="polite"></span>
+  `;
+  filterBar.insertAdjacentElement('beforebegin', tools);
+
+  const input = tools.querySelector('input');
+  input.addEventListener('input', () => {
+    referenceSearch = input.value.trim().toLowerCase();
+    applyReferenceView();
+  });
+}
+
+function addContactAndLegalCoverage() {
   const teamCards = document.querySelectorAll('.team-strip > div');
   const teamPhones = [
     ['+49 171 5248966', '+491715248966'],
@@ -174,7 +336,35 @@ function addVerifiedSourceCoverage() {
   }
 }
 
+function addOriginalGalleryLinks() {
+  const panel = document.querySelector('.archive-panel');
+  if (!panel || panel.querySelector('.source-category-links')) return;
+  const sourceLinks = document.createElement('div');
+  sourceLinks.className = 'source-category-links';
+  sourceLinks.innerHTML = `
+    <span>Direkt zu den umfangreichen Bildgalerien der bestehenden Website:</span>
+    <div>
+      <a href="https://www.larasser-metallbau.de/referenzen/interior/" target="_blank" rel="noopener">Interior ↗</a>
+      <a href="https://www.larasser-metallbau.de/referenzen/medallions/" target="_blank" rel="noopener">Medallions ↗</a>
+    </div>
+  `;
+  panel.appendChild(sourceLinks);
+}
+
+function addVerifiedSourceCoverage() {
+  addServiceAndFilterCoverage();
+  addArchiveCoverage();
+  addSpecialWorkShowcase();
+  addReferenceTools();
+  addContactAndLegalCoverage();
+  addOriginalGalleryLinks();
+}
+
 addVerifiedSourceCoverage();
+
+function getNavLinks() {
+  return [...document.querySelectorAll('.site-nav a')];
+}
 
 function getFilterChips() {
   return [...document.querySelectorAll('[data-filter]')];
@@ -185,6 +375,46 @@ function getFilterableItems() {
     ...document.querySelectorAll('.reference-card[data-category]'),
     ...document.querySelectorAll('.archive-list [data-category]'),
   ];
+}
+
+function itemSearchText(item) {
+  return `${item.dataset.search || ''} ${item.textContent || ''}`.toLowerCase();
+}
+
+function updateFilterCounts() {
+  const items = getFilterableItems();
+  getFilterChips().forEach((chip) => {
+    const filter = chip.dataset.filter || 'all';
+    const count = items.filter((item) => filter === 'all' || item.dataset.category === filter).length;
+    let countNode = chip.querySelector('small');
+    if (!countNode) {
+      countNode = document.createElement('small');
+      chip.appendChild(countNode);
+    }
+    countNode.textContent = String(count);
+  });
+}
+
+function applyReferenceView() {
+  let visibleCount = 0;
+  getFilterChips().forEach((chip) => {
+    const active = chip.dataset.filter === activeReferenceFilter;
+    chip.classList.toggle('is-active', active);
+    chip.setAttribute('aria-pressed', String(active));
+  });
+
+  getFilterableItems().forEach((item) => {
+    const categoryMatch = activeReferenceFilter === 'all' || item.dataset.category === activeReferenceFilter;
+    const searchMatch = !referenceSearch || itemSearchText(item).includes(referenceSearch);
+    const visible = categoryMatch && searchMatch;
+    item.classList.toggle('is-hidden', !visible);
+    if (visible) visibleCount += 1;
+  });
+
+  const countNode = document.querySelector('.reference-count');
+  if (countNode) {
+    countNode.textContent = `${visibleCount} ${visibleCount === 1 ? 'Projekt' : 'Projekte'}`;
+  }
 }
 
 function unlockBodyAfterNav() {
@@ -228,35 +458,33 @@ navToggle?.addEventListener('click', () => {
   document.body.classList.contains('nav-open') ? closeNav() : openNav();
 });
 
-navLinks.forEach((link) => link.addEventListener('click', closeNav));
+getNavLinks().forEach((link) => link.addEventListener('click', closeNav));
 
 window.addEventListener('resize', () => {
   if (window.innerWidth > 1040) closeNav();
 });
 
-function applyFilter(filter) {
-  getFilterChips().forEach((chip) => {
-    const active = chip.dataset.filter === filter;
-    chip.classList.toggle('is-active', active);
-    chip.setAttribute('aria-pressed', String(active));
-  });
-
-  getFilterableItems().forEach((item) => {
-    const visible = filter === 'all' || item.dataset.category === filter;
-    item.classList.toggle('is-hidden', !visible);
-  });
-}
-
+updateFilterCounts();
 getFilterChips().forEach((chip) => {
   chip.setAttribute('aria-pressed', String(chip.classList.contains('is-active')));
-  chip.addEventListener('click', () => applyFilter(chip.dataset.filter || 'all'));
+  chip.addEventListener('click', () => {
+    activeReferenceFilter = chip.dataset.filter || 'all';
+    applyReferenceView();
+  });
 });
+applyReferenceView();
 
 document.querySelectorAll('[data-filter-link]').forEach((link) => {
   link.addEventListener('click', () => {
     const filter = link.dataset.filterLink;
     const hasMatches = getFilterableItems().some((item) => item.dataset.category === filter);
-    if (filter && hasMatches) applyFilter(filter);
+    if (filter && hasMatches) {
+      activeReferenceFilter = filter;
+      referenceSearch = '';
+      const searchInput = document.querySelector('.reference-search input');
+      if (searchInput) searchInput.value = '';
+      applyReferenceView();
+    }
   });
 });
 
@@ -279,13 +507,13 @@ function ensureLightboxControls() {
   prev.type = 'button';
   prev.className = 'lightbox-nav lightbox-prev';
   prev.setAttribute('aria-label', 'Vorheriges Projektbild');
-  prev.textContent = '‹';
+  prev.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   const next = document.createElement('button');
   next.type = 'button';
   next.className = 'lightbox-nav lightbox-next';
   next.setAttribute('aria-label', 'Nächstes Projektbild');
-  next.textContent = '›';
+  next.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   const meta = document.createElement('div');
   meta.className = 'lightbox-meta';
@@ -352,13 +580,15 @@ lightbox?.addEventListener('close', () => document.body.classList.remove('lightb
 files?.addEventListener('change', () => {
   const selected = [...files.files];
   if (!selected.length) {
-    fileStatus.textContent = 'Optional – Bilder oder PDF auswählen';
+    if (fileStatus) fileStatus.textContent = 'Optional – Bilder oder PDF auswählen';
     return;
   }
 
-  fileStatus.textContent = selected.length === 1
-    ? selected[0].name
-    : `${selected.length} Dateien ausgewählt`;
+  if (fileStatus) {
+    fileStatus.textContent = selected.length === 1
+      ? selected[0].name
+      : `${selected.length} Dateien ausgewählt`;
+  }
 });
 
 document.querySelectorAll('[data-prefill]').forEach((link) => {
@@ -411,6 +641,6 @@ form?.addEventListener('submit', (event) => {
 
   const subject = `Projektanfrage – ${data.get('project-type') || 'Metallbau'}`;
   const mailto = `mailto:info@larasser-metallbau.de?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines.join('\n'))}`;
-  formNote.textContent = 'E-Mail wird vorbereitet. Ausgewählte Dateien bitte im Mailprogramm manuell anhängen.';
+  if (formNote) formNote.textContent = 'E-Mail wird vorbereitet. Ausgewählte Dateien bitte im Mailprogramm manuell anhängen.';
   window.location.href = mailto;
 });
