@@ -25,6 +25,13 @@ function openNav() {
   navToggle?.setAttribute('aria-label', 'Navigation schließen');
 }
 
+function scrollToTarget(target) {
+  if (!target) return;
+  const headerHeight = document.querySelector('.site-header')?.offsetHeight || 0;
+  const top = window.scrollY + target.getBoundingClientRect().top - headerHeight - 12;
+  window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+}
+
 navToggle?.addEventListener('click', () => {
   document.body.classList.contains('nav-open') ? closeNav() : openNav();
 });
@@ -58,6 +65,19 @@ filterLinks.forEach((link) => {
     const filter = link.dataset.filterLink;
     const hasMatches = [...referenceCards, ...archiveItems].some((item) => item.dataset.category === filter);
     if (filter && hasMatches) applyFilter(filter);
+  });
+});
+
+document.querySelectorAll('a[href^="#"]').forEach((link) => {
+  link.addEventListener('click', (event) => {
+    const hash = link.getAttribute('href');
+    if (!hash || hash === '#') return;
+    const target = document.querySelector(hash);
+    if (!target) return;
+    event.preventDefault();
+    closeNav();
+    scrollToTarget(target);
+    if (history.replaceState) history.replaceState(null, '', hash);
   });
 });
 
