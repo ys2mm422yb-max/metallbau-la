@@ -75,8 +75,10 @@ for (const profile of profiles) {
   }
 
   await page.locator('[data-filter="all"]').first().click();
-  const weirdVisibleCopy = await page.locator('#referenzen, #specialarbeiten').evaluate((root) => {
-    const text = root.innerText;
+  const weirdVisibleCopy = await page.evaluate(() => {
+    const text = ['referenzen', 'specialarbeiten']
+      .map((id) => document.getElementById(id)?.innerText || '')
+      .join('\n');
     return [
       'Mehr echte Projekte. Weniger Werbetext.',
       'Diese Demo macht daraus',
